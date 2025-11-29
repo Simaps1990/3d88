@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase, Realization } from '../lib/supabase';
 import { useSiteText } from '../hooks/useSiteText';
-import { Eye } from 'lucide-react';
 
 type RealizationsProps = {
   limit?: number;
@@ -48,6 +47,9 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
     }
   };
 
+  const visibleRealizations = limit ? realizations.slice(0, limit) : realizations;
+  const useTwoColumnsOnly = visibleRealizations.length <= 2;
+
   return (
     <section
       id="realisations"
@@ -72,8 +74,14 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(limit ? realizations.slice(0, limit) : realizations).map((realization, index) => (
+          <div
+            className={
+              useTwoColumnsOnly
+                ? 'grid grid-cols-1 md:grid-cols-2 gap-8'
+                : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'
+            }
+          >
+            {visibleRealizations.map((realization, index) => (
               <div
                 key={realization.id}
                 className={`group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer ${
@@ -82,15 +90,17 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
                 style={{ transitionDelay: `${index * 100}ms` }}
                 onClick={() => setSelectedRealization(realization)}
               >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={realization.image_url}
-                    alt={realization.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Eye className="w-12 h-12 text-white" />
-                  </div>
+                <div className="aspect-[4/3] overflow-hidden relative bg-slate-100">
+                  {realization.image_url && (
+                    <img
+                      src={realization.image_url}
+                      alt={realization.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  )}
+                  {realization.image_url && (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-slate-900/40 via-slate-900/0 to-transparent"></div>
+                  )}
                 </div>
 
                 <div className="p-6">

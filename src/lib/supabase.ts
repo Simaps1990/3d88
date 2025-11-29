@@ -14,6 +14,8 @@ export type Realization = {
   title: string;
   description: string;
   image_url: string;
+  image_url_2?: string | null;
+  image_url_3?: string | null;
   category: string;
   created_at: string;
   published: boolean;

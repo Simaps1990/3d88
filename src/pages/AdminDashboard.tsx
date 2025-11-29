@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'realizations' | 'quotes' | 'contents'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
@@ -28,19 +28,17 @@ export default function AdminDashboard() {
     title: '',
     description: '',
     image_url: '',
+    image_url_2: '',
+    image_url_3: '',
     category: 'general',
     published: false,
     order_position: 0
   });
 
   useEffect(() => {
-    if (!user) {
-      window.location.href = '/admin/login';
-      return;
-    }
-
+    if (loading || !user) return;
     loadData();
-  }, [user, activeTab]);
+  }, [user, loading, activeTab]);
 
   const loadData = async () => {
     if (activeTab === 'realizations') {
@@ -62,6 +60,28 @@ export default function AdminDashboard() {
         .order('key', { ascending: true });
       if (data) setSiteTexts(data as SiteText[]);
     }
+  };
+
+  const handleImageUpload = async (file: File, slot: 1 | 2 | 3) => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-slot${slot}.${ext}`;
+
+    const { data, error } = await supabase.storage.from('realizations').upload(fileName, file);
+    if (error || !data?.path) {
+      console.error('Erreur upload image', error);
+      return;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from('realizations')
+      .getPublicUrl(data.path);
+
+    const url = publicData?.publicUrl || '';
+    setFormData((current) => {
+      if (slot === 1) return { ...current, image_url: url };
+      if (slot === 2) return { ...current, image_url_2: url };
+      return { ...current, image_url_3: url };
+    });
   };
 
   const handleSiteTextChange = (key: string, value: string) => {
@@ -100,6 +120,8 @@ export default function AdminDashboard() {
       title: '',
       description: '',
       image_url: '',
+      image_url_2: '',
+      image_url_3: '',
       category: 'general',
       published: false,
       order_position: 0
@@ -113,6 +135,8 @@ export default function AdminDashboard() {
       title: realization.title,
       description: realization.description,
       image_url: realization.image_url,
+      image_url_2: realization.image_url_2 || '',
+      image_url_3: realization.image_url_3 || '',
       category: realization.category,
       published: realization.published,
       order_position: realization.order_position
@@ -148,7 +172,32 @@ export default function AdminDashboard() {
     window.location.href = '/';
   };
 
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-slate-600 text-sm">Chargement du tableau de bord...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="bg-white rounded-xl shadow-md border border-slate-200 px-8 py-6 text-center space-y-4">
+          <h1 className="text-xl font-semibold text-slate-900">Accès administrateur</h1>
+          <p className="text-sm text-slate-600">
+            Vous devez être connecté pour accéder au tableau de bord.
+          </p>
+          <a
+            href="/admin/login"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Aller à la page de connexion
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -215,6 +264,8 @@ export default function AdminDashboard() {
                     title: '',
                     description: '',
                     image_url: '',
+                    image_url_2: '',
+                    image_url_3: '',
                     category: 'general',
                     published: false,
                     order_position: realizations.length
@@ -481,29 +532,97 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  URL de l'image *
+                  Images du projet (jusqu'à 3)
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Catégorie
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
-                  placeholder="Ex: Prototypage, Figurine, Pièce technique..."
-                />
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Image 1 – couverture *</p>
+                    {formData.image_url && (
+                      <div className="flex items-center space-x-3 mb-2">
+                        <img
+                          src={formData.image_url}
+                          alt="Aperçu couverture"
+                          className="w-16 h-16 object-cover rounded-lg border border-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url: '' })}
+                          className="text-xs text-red-600 hover:text-red-700"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 1);
+                      }}
+                      className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Image 2 (optionnelle)</p>
+                    {formData.image_url_2 && (
+                      <div className="flex items-center space-x-3 mb-2">
+                        <img
+                          src={formData.image_url_2}
+                          alt="Aperçu image 2"
+                          className="w-16 h-16 object-cover rounded-lg border border-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url_2: '' })}
+                          className="text-xs text-red-600 hover:text-red-700"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 2);
+                      }}
+                      className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Image 3 (optionnelle)</p>
+                    {formData.image_url_3 && (
+                      <div className="flex items-center space-x-3 mb-2">
+                        <img
+                          src={formData.image_url_3}
+                          alt="Aperçu image 3"
+                          className="w-16 h-16 object-cover rounded-lg border border-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url_3: '' })}
+                          className="text-xs text-red-600 hover:text-red-700"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 3);
+                      }}
+                      className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

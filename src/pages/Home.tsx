@@ -26,7 +26,7 @@ export default function Home() {
       <Navigation />
       <Hero />
       <Services />
-      <Realizations limit={2} showViewAllButton />
+      <Realizations limit={3} showViewAllButton />
       <Contact />
       <Footer />
     </div>
