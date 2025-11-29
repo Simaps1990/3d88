@@ -34,11 +34,15 @@ export default function Navigation() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const isHome = path === '/';
+  const navVisible = isHome ? scrolled : true;
+
   return (
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md shadow-lg transition-all duration-300 transform ${
-          scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+          navVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
         }`}
       >
         <div className="container mx-auto px-6">
