@@ -26,11 +26,15 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950">
       <div
-        className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40"
-        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/fond.jpg')",
+          transform: `translateY(${scrollY * 0.5}px)`,
+        }}
       />
+      <div className="absolute inset-0 bg-slate-950/70" />
 
       <div className="container mx-auto px-6 relative z-10">
         <div
@@ -44,20 +48,20 @@ export default function Hero() {
             <img src="/logo3d.png" alt="3D88" className="w-56 h-56 object-contain" />
           </div>
 
-          <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-slate-100 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
             {lead}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/50"
+              className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaPrimary}
             </a>
             <a
-              href="/realisations"
-              className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-white/20"
+              href="#realisations"
+              className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaSecondary}
             </a>

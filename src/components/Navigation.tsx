@@ -27,9 +27,8 @@ export default function Navigation() {
     { href: '/#contact', label: labelContact },
   ];
 
-  if (user) {
-    navLinks.push({ href: '/admin', label: 'Admin' });
-  }
+  // On n'ajoute plus de lien texte "Admin" dans la navigation publique :
+  // l'accès backoffice se fait uniquement via l'icône cadenas.
 
   return (
     <nav

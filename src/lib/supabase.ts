@@ -16,10 +16,10 @@ export type Realization = {
   image_url: string;
   image_url_2?: string | null;
   image_url_3?: string | null;
-  category: string;
+  category?: string | null;
   created_at: string;
   published: boolean;
-  order_position: number;
+  order_position?: number | null;
 };
 
 export type QuoteRequest = {
