@@ -5,6 +5,7 @@ export default function LegalMentions() {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
       <Navigation />
+      
       <main className="pt-28 pb-16">
         <div className="container mx-auto px-6 max-w-3xl space-y-8">
           <header className="space-y-2">
