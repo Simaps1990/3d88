@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, Realization, QuoteRequest, SiteText } from '../lib/supabase';
+import { supabase, Realization, SiteText } from '../lib/supabase';
 import {
   LogOut,
   Plus,
@@ -18,9 +18,8 @@ import {
 export default function AdminDashboard() {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'realizations' | 'quotes' | 'contents'>('realizations');
+  const [activeTab, setActiveTab] = useState<'realizations' | 'contents'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
-  const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -46,12 +45,6 @@ export default function AdminDashboard() {
         .select('*')
         .order('created_at', { ascending: false });
       if (data) setRealizations(data);
-    } else if (activeTab === 'quotes') {
-      const { data } = await supabase
-        .from('quote_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (data) setQuotes(data);
     } else {
       const { data } = await supabase
         .from('site_texts')
@@ -59,6 +52,35 @@ export default function AdminDashboard() {
         .order('key', { ascending: true });
       if (data) setSiteTexts(data as SiteText[]);
     }
+  };
+
+  const handleAboutImageUpload = async (file: File, text: SiteText) => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-about.${ext}`;
+
+    const { data, error } = await supabase.storage.from('realizations').upload(fileName, file);
+    if (error || !data?.path) {
+      console.error('Erreur upload image À propos', error);
+      return;
+    }
+
+    const { data: publicData } = supabase.storage.from('realizations').getPublicUrl(data.path);
+    const url = publicData?.publicUrl || '';
+
+    const updated: SiteText = { ...text, value: url };
+    setSiteTexts((current) =>
+      current.map((t) => (t.key === text.key ? updated : t))
+    );
+
+    setSavingKey(text.key);
+    await supabase
+      .from('site_texts')
+      .upsert({
+        key: updated.key,
+        value: updated.value,
+        description: updated.description,
+      });
+    setSavingKey(null);
   };
 
   const handleImageUpload = async (file: File, slot: 1 | 2 | 3) => {
@@ -151,14 +173,6 @@ export default function AdminDashboard() {
       .from('realizations')
       .update({ published: !realization.published })
       .eq('id', realization.id);
-    loadData();
-  };
-
-  const updateQuoteStatus = async (id: string, status: string) => {
-    await supabase
-      .from('quote_requests')
-      .update({ status })
-      .eq('id', id);
     loadData();
   };
 
@@ -280,16 +294,6 @@ export default function AdminDashboard() {
             }`}
           >
             Réalisations
-          </button>
-          <button
-            onClick={() => setActiveTab('quotes')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'quotes'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            Demandes de devis
           </button>
           <button
             onClick={() => setActiveTab('contents')}
@@ -414,6 +418,7 @@ export default function AdminDashboard() {
                   const orderedSections = [
                     'hero',
                     'services',
+                    'about',
                     'realizations',
                     'contact',
                     'footer',
@@ -426,6 +431,7 @@ export default function AdminDashboard() {
                   const sectionLabels: Record<string, string> = {
                     hero: "Page d'accueil – Hero",
                     services: 'Section Services',
+                    about: 'Section À propos',
                     realizations: 'Section Réalisations',
                     contact: 'Section Contact',
                     footer: 'Pied de page',
@@ -464,11 +470,40 @@ export default function AdminDashboard() {
                                     {text.description && (
                                       <p className="text-xs text-slate-500 mb-2">{text.description}</p>
                                     )}
-                                    <textarea
-                                      value={text.value}
-                                      onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
-                                    />
+
+                                    {text.key === 'about_image_url' ? (
+                                      <div className="space-y-3">
+                                        {text.value && (
+                                          <div className="flex items-center space-x-3">
+                                            <img
+                                              src={text.value}
+                                              alt="Aperçu image À propos"
+                                              className="w-20 h-20 object-cover rounded-lg border border-slate-200"
+                                            />
+                                            <span className="text-xs text-slate-500 break-all max-w-xs">
+                                              {text.value}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              void handleAboutImageUpload(file, text);
+                                            }
+                                          }}
+                                          className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <textarea
+                                        value={text.value}
+                                        onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                      />
+                                    )}
                                   </div>
                                   <div className="flex flex-col items-end space-y-2">
                                     <button
@@ -489,68 +524,6 @@ export default function AdminDashboard() {
                 })()}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === 'quotes' && (
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Demandes de devis</h2>
-            <div className="space-y-4">
-              {quotes.map((quote) => (
-                <div
-                  key={quote.id}
-                  className="bg-white rounded-lg p-6 shadow-sm border border-slate-200"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-1">{quote.name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                        <span className="flex items-center space-x-1">
-                          <Mail className="w-4 h-4" />
-                          <span>{quote.email}</span>
-                        </span>
-                        {quote.phone && (
-                          <span className="flex items-center space-x-1">
-                            <Phone className="w-4 h-4" />
-                            <span>{quote.phone}</span>
-                          </span>
-                        )}
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(quote.created_at).toLocaleDateString('fr-FR')}</span>
-                        </span>
-                      </div>
-                    </div>
-                    <select
-                      value={quote.status}
-                      onChange={(e) => updateQuoteStatus(quote.id, e.target.value)}
-                      className="px-3 py-1 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="nouveau">Nouveau</option>
-                      <option value="en cours">En cours</option>
-                      <option value="traité">Traité</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-slate-700 whitespace-pre-line">{quote.message}</p>
-                  </div>
-
-                  {quote.file_url && (
-                    <a
-                      href={quote.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>{quote.file_name}</span>
-                      <Download className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>

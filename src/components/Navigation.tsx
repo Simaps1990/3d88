@@ -9,6 +9,7 @@ export default function Navigation() {
   const { user } = useAuth();
 
   const labelServices = useSiteText('nav_services_label', 'Services');
+  const labelAbout = useSiteText('nav_about_label', 'À propos');
   const labelRealisations = useSiteText('nav_realisations_label', 'Réalisations');
   const labelContact = useSiteText('nav_contact_label', 'Contact');
 
@@ -23,6 +24,7 @@ export default function Navigation() {
 
   const navLinks = [
     { href: '/#services', label: labelServices },
+    { href: '/#about', label: labelAbout },
     { href: '/realisations', label: labelRealisations },
     { href: '/#contact', label: labelContact },
   ];

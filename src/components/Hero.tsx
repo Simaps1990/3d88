@@ -12,7 +12,7 @@ export default function Hero() {
     "De l'idée à la réalité, je transforme vos projets en objets concrets grâce à la modélisation et l'impression 3D professionnelle."
   );
   const ctaPrimary = useSiteText('hero_cta_primary', 'Demander un devis');
-  const ctaSecondary = useSiteText('hero_cta_secondary', 'Voir mes réalisations');
+  const ctaSecondary = useSiteText('hero_cta_secondary', 'En savoir plus');
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -60,7 +60,7 @@ export default function Hero() {
               {ctaPrimary}
             </a>
             <a
-              href="#realisations"
+              href="#about"
               className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaSecondary}

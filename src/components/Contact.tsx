@@ -98,6 +98,13 @@ export default function Contact() {
 
       if (insertError) throw insertError;
 
+      const mailtoSubject = encodeURIComponent('Nouvelle demande de devis depuis 3D88');
+      const mailtoBody = encodeURIComponent(
+        `Nom : ${formData.name}\nEmail : ${formData.email}\nTéléphone : ${formData.phone || '—'}\n\nMessage :\n${formData.message}\n\nFichier joint : ${fileName ? fileName + ' (' + (fileUrl || 'URL non disponible') + ')' : 'Aucun fichier joint'}`
+      );
+
+      window.location.href = `mailto:boyer_thomas@hotmail.fr?subject=${mailtoSubject}&body=${mailtoBody}`;
+
       setSuccess(true);
       setFormData({ name: '', email: '', phone: '', message: '' });
       setFile(null);
