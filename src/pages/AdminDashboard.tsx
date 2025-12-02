@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase, Realization, SiteText } from '../lib/supabase';
 import {
@@ -15,7 +15,7 @@ import {
 export default function AdminDashboard() {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'concours'>('realizations');
+  const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'bandeau'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -29,6 +29,14 @@ export default function AdminDashboard() {
     image_url_3: '',
     published: false
   });
+  const [bannerText, setBannerText] = useState('');
+  const [bannerLink, setBannerLink] = useState('');
+  const [bannerEnabled, setBannerEnabled] = useState(false);
+  const [bannerSaving, setBannerSaving] = useState(false);
+  const bannerEditorRef = useRef<HTMLDivElement | null>(null);
+  const [bannerBoldActive, setBannerBoldActive] = useState(false);
+  const [bannerItalicActive, setBannerItalicActive] = useState(false);
+  const [bannerUnderlineActive, setBannerUnderlineActive] = useState(false);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -43,14 +51,42 @@ export default function AdminDashboard() {
         .order('order_position', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
       if (data) setRealizations(data as Realization[]);
-    } else {
+    } else if (activeTab === 'contents') {
       const { data } = await supabase
         .from('site_texts')
         .select('*')
         .order('key', { ascending: true });
       if (data) setSiteTexts(data as SiteText[]);
+    } else {
+      const { data } = await supabase
+        .from('site_texts')
+        .select('key, value')
+        .in('key', ['banner_html', 'banner_link', 'banner_enabled']);
+
+      if (data) {
+        const map = Object.fromEntries(data.map((row: any) => [row.key, row.value ?? '']));
+        const html = (map['banner_html'] as string) || '';
+        setBannerText(html);
+        setBannerLink((map['banner_link'] as string) || '');
+        setBannerEnabled(((map['banner_enabled'] as string) || 'false') === 'true');
+
+        if (bannerEditorRef.current) {
+          bannerEditorRef.current.innerHTML = html;
+          refreshBannerToolbarState();
+        }
+      }
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'bandeau' && bannerEditorRef.current) {
+      // Quand on ouvre l'onglet Bandeau, on s'assure que l'éditeur contient le texte courant
+      if (bannerEditorRef.current.innerHTML === '') {
+        bannerEditorRef.current.innerHTML = bannerText || '';
+      }
+      refreshBannerToolbarState();
+    }
+  }, [activeTab]);
 
   const handleAboutImageUpload = async (file: File, text: SiteText) => {
     const ext = file.name.split('.').pop();
@@ -209,6 +245,41 @@ export default function AdminDashboard() {
     window.location.href = '/';
   };
 
+  const refreshBannerToolbarState = () => {
+    try {
+      setBannerBoldActive(document.queryCommandState('bold'));
+      setBannerItalicActive(document.queryCommandState('italic'));
+      setBannerUnderlineActive(document.queryCommandState('underline'));
+    } catch {
+      // ignore
+    }
+  };
+
+  const applyBannerCommand = (command: string, value?: string) => {
+    if (!bannerEditorRef.current) return;
+    try {
+      document.execCommand(command, false, value ?? '');
+      setBannerText(bannerEditorRef.current.innerHTML);
+      refreshBannerToolbarState();
+    } catch (err) {
+      console.error('Erreur mise en forme bandeau', err);
+    }
+  };
+
+  const handleSaveBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBannerSaving(true);
+    try {
+      await supabase.from('site_texts').upsert([
+        { key: 'banner_html', value: bannerText, description: 'Texte HTML du bandeau promotionnel' },
+        { key: 'banner_link', value: bannerLink, description: 'Lien cliquable du bandeau' },
+        { key: 'banner_enabled', value: bannerEnabled ? 'true' : 'false', description: 'Activation du bandeau' },
+      ]);
+    } finally {
+      setBannerSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -256,7 +327,6 @@ export default function AdminDashboard() {
               >
                 Retour au site
               </a>
-              <span className="text-sm text-slate-500 hidden lg:inline">{user.email}</span>
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
@@ -332,16 +402,16 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    setActiveTab('concours');
+                    setActiveTab('bandeau');
                     setIsMenuOpen(false);
                   }}
-                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
-                    activeTab === 'concours'
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'bandeau'
                       ? 'bg-white text-slate-900 border-white'
                       : 'bg-transparent text-white border-white/20 hover:bg-white/5'
                   }`}
                 >
-                  Concours
+                  Bandeau
                 </button>
               </div>
 
@@ -359,7 +429,7 @@ export default function AdminDashboard() {
       </nav>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="flex flex-wrap gap-3 mb-8">
+        <div className="max-w-5xl mx-auto flex flex-wrap gap-3 mb-8">
           <button
             onClick={() => setActiveTab('realizations')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
@@ -381,21 +451,21 @@ export default function AdminDashboard() {
             Contenus
           </button>
           <button
-            onClick={() => setActiveTab('concours')}
+            onClick={() => setActiveTab('bandeau')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === 'concours'
+              activeTab === 'bandeau'
                 ? 'bg-blue-500 text-white'
                 : 'bg-white text-slate-700 hover:bg-slate-100'
             }`}
           >
-            Concours
+            Bandeau
           </button>
         </div>
 
         {activeTab === 'realizations' && (
-          <div>
+          <div className="max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">Réalisations</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Réalisations</h2>
               <button
                 onClick={() => {
                   setEditingRealization(null);
@@ -442,9 +512,7 @@ export default function AdminDashboard() {
                             {realization.published ? 'Publié' : 'Brouillon'}
                           </span>
                         </div>
-                        {realization.category && (
-                          <p className="text-xs md:text-sm text-slate-600 mb-1">{realization.category}</p>
-                        )}
+                        {/* On n'affiche plus la catégorie (technique, général, etc.) dans les cartes admin */}
                         <p className="text-sm text-slate-700 line-clamp-2 md:line-clamp-3">{realization.description}</p>
                       </div>
                     </div>
@@ -502,9 +570,9 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'contents' && (
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Contenus du site</h2>
-            <p className="text-sm text-slate-600 mb-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Contenus du site</h2>
+            <p className="text-sm text-slate-600 mb-6 max-w-3xl">
               Modifiez ici les textes affichés sur le site (hero, sections, footer, etc.).
             </p>
 
@@ -633,10 +701,110 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {activeTab === 'concours' && (
-          <div className="max-w-xl mx-auto text-center mt-4">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Concours</h2>
-            <p className="text-sm text-slate-600">En cours de développement</p>
+        {activeTab === 'bandeau' && (
+          <div className="max-w-5xl mx-auto mt-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Bandeau</h2>
+            <p className="text-sm text-slate-600 mb-6 max-w-3xl">
+              Configurez ici le texte et le lien de votre bandeau promotionnel affiché sous le header sur le site.
+            </p>
+
+            <form onSubmit={handleSaveBanner} className="space-y-6 bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-3xl">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Texte du bandeau
+                </label>
+
+                <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
+                  <span className="text-slate-500 mr-2">Mise en forme&nbsp;:</span>
+                  <button
+                    type="button"
+                    className={`px-2 py-1 rounded border text-xs font-semibold transition-colors ${
+                      bannerBoldActive
+                        ? 'border-[#4a7a54] bg-[#4a7a54] text-[#e1d59d]'
+                        : 'border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                    }`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyBannerCommand('bold')}
+                  >
+                    G
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-2 py-1 rounded border text-xs italic transition-colors ${
+                      bannerItalicActive
+                        ? 'border-[#4a7a54] bg-[#4a7a54] text-[#e1d59d]'
+                        : 'border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                    }`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyBannerCommand('italic')}
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-2 py-1 rounded border text-xs underline transition-colors ${
+                      bannerUnderlineActive
+                        ? 'border-[#4a7a54] bg-[#4a7a54] text-[#e1d59d]'
+                        : 'border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                    }`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyBannerCommand('underline')}
+                  >
+                    U
+                  </button>
+                </div>
+
+                <div
+                  ref={bannerEditorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:border-[#4a7a54] focus:ring-2 focus:ring-[#4a7a54]/40 min-h-[120px] bg-white"
+                  onInput={(e) => {
+                    const html = (e.target as HTMLDivElement).innerHTML;
+                    setBannerText(html);
+                    refreshBannerToolbarState();
+                  }}
+                  onKeyUp={refreshBannerToolbarState}
+                  onMouseUp={refreshBannerToolbarState}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Lien cliquable du bandeau (optionnel)
+                </label>
+                <input
+                  type="url"
+                  value={bannerLink}
+                  onChange={(e) => setBannerLink(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#4a7a54] focus:ring-2 focus:ring-[#4a7a54]/40"
+                  placeholder="https://votre-lien.fr/promo"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Si renseigné, l&apos;ensemble du bandeau sera cliquable et mènera vers cette URL.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={bannerEnabled}
+                    onChange={(e) => setBannerEnabled(e.target.checked)}
+                    className="w-4 h-4 text-[#4a7a54] border-slate-300 rounded focus:ring-[#4a7a54]"
+                  />
+                  <span className="text-sm text-slate-700">Afficher le bandeau sur le site</span>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={bannerSaving}
+                  className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[#4a7a54] hover:bg-[#3b6344] disabled:bg-slate-400 text-[#e1d59d] text-sm font-semibold transition-colors"
+                >
+                  {bannerSaving ? 'Enregistrement...' : 'Enregistrer le bandeau'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>

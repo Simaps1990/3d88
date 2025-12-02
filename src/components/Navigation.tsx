@@ -12,6 +12,10 @@ export default function Navigation() {
   const labelAbout = useSiteText('nav_about_label', 'À propos');
   const labelRealisations = useSiteText('nav_realisations_label', 'Réalisations');
   const labelContact = useSiteText('nav_contact_label', 'Contact');
+  const bannerHtml = useSiteText('banner_html', '');
+  const bannerLink = useSiteText('banner_link', '');
+  const bannerEnabledRaw = useSiteText('banner_enabled', 'false');
+  const bannerEnabled = bannerEnabledRaw === 'true';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,10 +114,33 @@ export default function Navigation() {
         )}
       </nav>
 
+      {bannerEnabled && bannerHtml.trim() !== '' && (
+        <div className="border-t border-[#18271e] bg-[#18271e]/95 text-[#e1d59d] text-sm md:text-base overflow-hidden">
+          {bannerLink.trim() ? (
+            <a
+              href={bannerLink}
+              className="block hover:bg-[#101b14]/80 transition-colors"
+            >
+              <div className="whitespace-nowrap">
+                <div className="banner-marquee inline-block px-6 py-2 font-medium">
+                  <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+                </div>
+              </div>
+            </a>
+          ) : (
+            <div className="whitespace-nowrap">
+              <div className="banner-marquee inline-block px-6 py-2 font-medium">
+                <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {scrolled && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#4a7a54] text-[#e1d59d] shadow-lg shadow-black/60 hover:bg-[#3b6344] transition-colors"
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#4a7a54] text-[#e1d59d] shadow-md shadow-black/40 hover:bg-[#3b6344] transition-colors"
           aria-label="Remonter en haut de la page"
         >
           <ChevronUp className="w-5 h-5" />
