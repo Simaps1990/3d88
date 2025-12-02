@@ -55,7 +55,7 @@ export default function Services() {
       ref={sectionRef}
       className="py-24 bg-white relative overflow-hidden"
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#4a7a54] to-transparent"></div>
 
       <div className="container mx-auto px-6">
         <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -71,17 +71,17 @@ export default function Services() {
           {services.map((service, index) => (
             <div
               key={index}
-              className={`group p-8 bg-slate-50 rounded-2xl hover:bg-gradient-to-br hover:from-amber-50 hover:to-amber-100 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-slate-200 hover:border-amber-200 ${
+              className={`group p-8 bg-slate-50 rounded-2xl hover:bg-gradient-to-br hover:from-[#4a7a54]/5 hover:to-[#4a7a54]/10 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-slate-200 hover:border-[#4a7a54]/60 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
               <div className="mb-6 relative">
-                <div className="absolute inset-0 bg-amber-500 blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-full"></div>
-                <service.icon className="w-12 h-12 text-slate-700 group-hover:text-amber-600 transition-colors duration-300 relative" strokeWidth={1.5} />
+                <div className="absolute inset-0 bg-[#4a7a54] blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-full"></div>
+                <service.icon className="w-12 h-12 text-slate-700 group-hover:text-[#4a7a54] transition-colors duration-300 relative" strokeWidth={1.5} />
               </div>
 
-              <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-amber-600 transition-colors">
+              <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-[#4a7a54] transition-colors">
                 {service.title}
               </h3>
 

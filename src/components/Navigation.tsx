@@ -43,7 +43,7 @@ export default function Navigation() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md shadow-lg transition-all duration-300 transform ${
+        className={`fixed top-0 left-0 right-0 z-50 bg-[#101b14]/95 backdrop-blur-md shadow-lg transition-all duration-300 transform ${
           navVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
         }`}
       >
@@ -59,7 +59,7 @@ export default function Navigation() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="font-medium text-slate-100 transition-colors duration-300 hover:text-amber-400"
+                  className="font-medium text-slate-100 transition-colors duration-300 hover:text-[#e1d59d]"
                 >
                   {link.label}
                 </a>
@@ -67,7 +67,7 @@ export default function Navigation() {
 
               <a
                 href="/admin/login"
-                className="flex items-center space-x-2 font-medium text-slate-100 hover:text-amber-400 transition-colors duration-300"
+                className="flex items-center space-x-2 font-medium text-slate-100 hover:text-[#e1d59d] transition-colors duration-300"
               >
                 <Lock className="w-5 h-5" />
               </a>
@@ -91,7 +91,7 @@ export default function Navigation() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block text-slate-700 hover:text-amber-600 font-medium transition-colors"
+                  className="block text-slate-700 hover:text-[#4a7a54] font-medium transition-colors"
                 >
                   {link.label}
                 </a>
@@ -100,7 +100,7 @@ export default function Navigation() {
               <a
                 href="/admin/login"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center space-x-2 text-slate-700 hover:text-amber-600 font-medium transition-colors"
+                className="flex items-center space-x-2 text-slate-700 hover:text-[#4a7a54] font-medium transition-colors"
               >
                 <Lock className="w-5 h-5" />
                 <span>Espace admin</span>
@@ -113,7 +113,7 @@ export default function Navigation() {
       {scrolled && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-slate-900/90 text-white shadow-lg shadow-black/60 hover:bg-slate-800 transition-colors"
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#4a7a54] text-[#e1d59d] shadow-lg shadow-black/60 hover:bg-[#3b6344] transition-colors"
           aria-label="Remonter en haut de la page"
         >
           <ChevronUp className="w-5 h-5" />

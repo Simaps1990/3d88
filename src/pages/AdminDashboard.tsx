@@ -8,17 +8,14 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Mail,
-  Phone,
-  Calendar,
-  FileText,
-  Download
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'realizations' | 'contents'>('realizations');
+  const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'concours'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -43,8 +40,9 @@ export default function AdminDashboard() {
       const { data } = await supabase
         .from('realizations')
         .select('*')
+        .order('order_position', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
-      if (data) setRealizations(data);
+      if (data) setRealizations(data as Realization[]);
     } else {
       const { data } = await supabase
         .from('site_texts')
@@ -148,6 +146,36 @@ export default function AdminDashboard() {
     loadData();
   };
 
+  const moveRealization = async (realization: Realization, direction: 'up' | 'down') => {
+    const index = realizations.findIndex((r) => r.id === realization.id);
+    if (index === -1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= realizations.length) return;
+
+    const target = realizations[targetIndex];
+
+    const currentPos = realization.order_position ?? index;
+    const targetPos = target.order_position ?? targetIndex;
+
+    // Mise à jour dans Supabase (on échange les positions)
+    await supabase
+      .from('realizations')
+      .update({ order_position: targetPos })
+      .eq('id', realization.id);
+
+    await supabase
+      .from('realizations')
+      .update({ order_position: currentPos })
+      .eq('id', target.id);
+
+    // Mise à jour optimiste côté client
+    const updated = [...realizations];
+    updated[index] = { ...target, order_position: currentPos };
+    updated[targetIndex] = { ...realization, order_position: targetPos };
+    setRealizations(updated);
+  };
+
   const handleEdit = (realization: Realization) => {
     setEditingRealization(realization);
     setFormData({
@@ -209,29 +237,29 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20">
-      <nav className="bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-slate-900/60 fixed top-0 left-0 right-0 z-40">
+    <div className="min-h-screen bg-white pt-20">
+      <nav className="bg-[#101b14]/95 backdrop-blur-md shadow-lg border-b border-slate-900/60 fixed top-0 left-0 right-0 z-40">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-20">
             <a href="/" className="flex items-center space-x-3">
               <img src="/pictoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
               <img src="/textelogoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
-              <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-slate-500 ml-2">
-                Backoffice
+              <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-white ml-2">
+                Mon espace perso
               </span>
             </a>
 
             <div className="hidden md:flex items-center space-x-4">
               <a
                 href="/"
-                className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors"
+                className="text-sm font-medium text-white hover:text-[#e1d59d] transition-colors"
               >
                 Retour au site
               </a>
               <span className="text-sm text-slate-500 hidden lg:inline">{user.email}</span>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm"
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Déconnexion</span>
@@ -241,7 +269,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#4a7a54]"
               aria-label="Ouvrir le menu admin"
             >
               <span className="sr-only">Ouvrir le menu</span>
@@ -263,17 +291,64 @@ export default function AdminDashboard() {
           </div>
 
           {isMenuOpen && (
-            <div className="mt-3 flex flex-col space-y-2 md:hidden">
-              <a
-                href="/"
-                className="text-sm font-medium text-slate-600 hover:text-amber-600 transition-colors"
-              >
-                Retour au site
-              </a>
-              <span className="text-xs text-slate-500">{user.email}</span>
+            <div className="mt-3 flex flex-col space-y-4 md:hidden">
+              {/* Bloc retour au site */}
+              <div className="border-b border-slate-800 pb-4">
+                <a
+                  href="/"
+                  className="inline-flex items-center justify-center w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-white/40 text-white hover:bg-white/10"
+                >
+                  Retour au site
+                </a>
+              </div>
+
+              {/* Bloc onglets backoffice */}
+              <div className="flex flex-col space-y-2">
+                <button
+                  onClick={() => {
+                    setActiveTab('realizations');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                    activeTab === 'realizations'
+                      ? 'bg-white text-slate-900 border-white'
+                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                  }`}
+                >
+                  Réalisations
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('contents');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                    activeTab === 'contents'
+                      ? 'bg-white text-slate-900 border-white'
+                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                  }`}
+                >
+                  Contenus
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('concours');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                    activeTab === 'concours'
+                      ? 'bg-white text-slate-900 border-white'
+                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                  }`}
+                >
+                  Concours
+                </button>
+              </div>
+
+              {/* Bloc déconnexion */}
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center justify-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm"
+                className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Déconnexion
@@ -284,7 +359,7 @@ export default function AdminDashboard() {
       </nav>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="flex space-x-4 mb-8">
+        <div className="flex flex-wrap gap-3 mb-8">
           <button
             onClick={() => setActiveTab('realizations')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
@@ -304,6 +379,16 @@ export default function AdminDashboard() {
             }`}
           >
             Contenus
+          </button>
+          <button
+            onClick={() => setActiveTab('concours')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              activeTab === 'concours'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Concours
           </button>
         </div>
 
@@ -335,18 +420,18 @@ export default function AdminDashboard() {
               {realizations.map((realization) => (
                 <div
                   key={realization.id}
-                  className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-lg p-4 md:p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex space-x-4 flex-1">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:space-x-4 flex-1">
                       <img
                         src={realization.image_url}
                         alt={realization.title}
-                        className="w-24 h-24 object-cover rounded-lg"
+                        className="w-full sm:w-32 h-40 sm:h-24 object-cover rounded-lg mb-3 sm:mb-0"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-bold text-slate-900">{realization.title}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="text-base md:text-lg font-bold text-slate-900">{realization.title}</h3>
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${
                               realization.published
@@ -357,11 +442,32 @@ export default function AdminDashboard() {
                             {realization.published ? 'Publié' : 'Brouillon'}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 mb-2">{realization.category}</p>
-                        <p className="text-sm text-slate-700 line-clamp-2">{realization.description}</p>
+                        {realization.category && (
+                          <p className="text-xs md:text-sm text-slate-600 mb-1">{realization.category}</p>
+                        )}
+                        <p className="text-sm text-slate-700 line-clamp-2 md:line-clamp-3">{realization.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="flex items-center md:items-start justify-end md:justify-start space-x-2 md:space-x-1">
+                      <div className="flex flex-col space-y-1 mr-1">
+                        <button
+                          type="button"
+                          onClick={() => moveRealization(realization, 'up')}
+                          className="p-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600"
+                          title="Monter"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveRealization(realization, 'down')}
+                          className="p-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600"
+                          title="Descendre"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
+
                       <button
                         onClick={() => togglePublished(realization)}
                         className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -524,6 +630,13 @@ export default function AdminDashboard() {
                 })()}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'concours' && (
+          <div className="max-w-xl mx-auto text-center mt-4">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Concours</h2>
+            <p className="text-sm text-slate-600">En cours de développement</p>
           </div>
         )}
       </div>

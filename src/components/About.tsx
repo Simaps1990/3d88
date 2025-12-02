@@ -33,9 +33,9 @@ export default function About() {
     <section
       id="about"
       ref={sectionRef}
-      className="py-24 bg-slate-900 text-white relative overflow-hidden"
+      className="py-24 bg-[#101b14] text-white relative overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 opacity-90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#101b14] via-[#18271e] to-[#101b14] opacity-90" />
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-5xl mx-auto">
@@ -45,7 +45,7 @@ export default function About() {
             }`}
           >
           <div className="order-2 md:order-1 space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-amber-400">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#4a7a54]">
               {title}
             </h2>
             <p className="text-lg text-slate-100 leading-relaxed whitespace-pre-line">
@@ -61,7 +61,7 @@ export default function About() {
                 className="w-full h-full object-cover"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/40 via-transparent to-amber-500/10" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/40 via-transparent to-[#4a7a54]/20" />
             </div>
           </div>
           </div>

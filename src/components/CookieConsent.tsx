@@ -24,7 +24,7 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="mx-4 max-w-lg rounded-2xl bg-slate-950 text-slate-100 shadow-2xl shadow-black/70 border border-slate-800">
+      <div className="mx-4 max-w-lg rounded-2xl bg-[#101b14] text-slate-100 shadow-2xl shadow-black/70 border border-slate-800">
         <div className="px-6 pt-6 pb-4 space-y-3">
           <h2 className="text-lg font-semibold">Gestion des cookies</h2>
           <p className="text-sm text-slate-300 leading-relaxed">
@@ -36,7 +36,7 @@ export default function CookieConsent() {
             dans votre navigateur. Pour en savoir plus, consultez les{' '}
             <a
               href="/mentions-legales"
-              className="text-amber-400 hover:text-amber-300 underline underline-offset-2"
+              className="text-[#e1d59d] hover:text-white underline underline-offset-2"
             >
               mentions légales
             </a>
@@ -54,7 +54,7 @@ export default function CookieConsent() {
           <button
             type="button"
             onClick={() => handleChoice('accepted')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-sm font-semibold text-white shadow-lg shadow-amber-500/40 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#4a7a54] hover:bg-[#3b6344] text-sm font-semibold text-[#e1d59d] shadow-lg shadow-[#4a7a54]/40 transition-colors"
           >
             Accepter
           </button>

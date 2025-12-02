@@ -26,7 +26,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#101b14]">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -34,7 +34,7 @@ export default function Hero() {
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       />
-      <div className="absolute inset-0 bg-slate-950/70" />
+      <div className="absolute inset-0 bg-[#101b14]/80" />
 
       <div className="container mx-auto px-6 relative z-10">
         <div
@@ -55,12 +55,12 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
+              className="px-8 py-4 bg-[#4a7a54] hover:bg-[#3b6344] text-[#e1d59d] rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaPrimary}
             </a>
             <a
-              href="#about"
+              href="#realisations"
               className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaSecondary}

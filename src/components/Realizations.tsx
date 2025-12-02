@@ -42,10 +42,11 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
       .from('realizations')
       .select('*')
       .eq('published', true)
+      .order('order_position', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false });
 
     if (data) {
-      setRealizations(data);
+      setRealizations(data as Realization[]);
     }
   };
 
@@ -58,7 +59,7 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
       ref={sectionRef}
       className="py-24 bg-slate-50 relative overflow-hidden"
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#4a7a54] to-transparent"></div>
 
       <div className="container mx-auto px-6">
         <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -109,7 +110,7 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
                 </div>
 
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-amber-600 transition-colors">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#4a7a54] transition-colors">
                     {realization.title}
                   </h3>
                   <p className="text-slate-600 line-clamp-2">
@@ -123,7 +124,7 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
             <div className="mt-12 text-center">
               <a
                 href="/realisations"
-                className="inline-flex items-center px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center px-8 py-3 bg-[#4a7a54] hover:bg-[#3b6344] text-[#e1d59d] rounded-lg font-semibold transition-colors"
               >
                 {viewAllLabel}
               </a>
@@ -194,8 +195,8 @@ export default function Realizations({ limit, showViewAllButton }: RealizationsP
                           onClick={() => setActiveImageIndex(idx)}
                           className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border transition-colors ${
                             idx === activeImageIndex
-                              ? 'border-amber-500'
-                              : 'border-slate-200 hover:border-amber-300'
+                              ? 'border-[#4a7a54]'
+                              : 'border-slate-200 hover:border-[#4a7a54]'
                           }`}
                         >
                           <img src={url} alt="aperçu" className="w-full h-full object-cover" />
