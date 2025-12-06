@@ -6,11 +6,8 @@ export default function Footer() {
     <footer className="bg-[#101b14] text-slate-300 py-12">
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-start gap-4">
-          <div className="flex items-center space-x-3 mb-2 md:mb-0">
-            <img src="/logo3d.png" alt="3D88" className="w-8 h-8 object-contain" />
-            <span className="text-lg font-bold text-white">
-              3D88
-            </span>
+          <div className="flex items-center mb-2 md:mb-0">
+            <img src="/LOGOng.png" alt="3D88" className="w-24 h-24 object-contain" />
           </div>
 
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-6 text-sm text-[#4a7a54]">

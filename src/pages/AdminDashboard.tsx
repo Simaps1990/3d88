@@ -15,7 +15,7 @@ import {
 export default function AdminDashboard() {
   const { user, loading, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'bandeau'>('realizations');
+  const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'bandeau' | 'reviews'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
         .select('*')
         .order('key', { ascending: true });
       if (data) setSiteTexts(data as SiteText[]);
-    } else {
+    } else if (activeTab === 'bandeau') {
       const { data } = await supabase
         .from('site_texts')
         .select('key, value')
@@ -76,6 +76,8 @@ export default function AdminDashboard() {
           refreshBannerToolbarState();
         }
       }
+    } else if (activeTab === 'reviews') {
+      // TODO: Ajouter la logique métier pour les avis
     }
   };
 
@@ -317,7 +319,7 @@ export default function AdminDashboard() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-20">
             <a href="/" className="flex items-center space-x-3">
-              <img src="/LOGOngsans.png" alt="3D88" className="h-16 w-auto object-contain" />
+              <img src="/LOGOngsans.png" alt="3D88" className="h-14 w-auto object-contain" />
               <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-white ml-2">
                 Mon espace perso
               </span>
@@ -416,6 +418,19 @@ export default function AdminDashboard() {
                 >
                   Bandeau
                 </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('reviews');
+                    setIsMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    activeTab === 'reviews'
+                      ? 'bg-white text-slate-900 border-white'
+                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                  }`}
+                >
+                  Avis (en développement)
+                </button>
               </div>
 
               {/* Bloc déconnexion */}
@@ -462,6 +477,16 @@ export default function AdminDashboard() {
             }`}
           >
             Bandeau
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              activeTab === 'reviews'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Avis (en développement)
           </button>
         </div>
 
@@ -570,6 +595,19 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'reviews' && (
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Avis Google</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              Cette section est actuellement en développement.
+            </p>
+            <p className="text-sm text-slate-500">
+              Vous pouvez déjà gérer l&apos;affichage des avis sur le site public dans la page d&apos;accueil.
+              Ici, un futur module permettra de connecter et d&apos;organiser les avis Google.
+            </p>
           </div>
         )}
 

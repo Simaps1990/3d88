@@ -4,16 +4,21 @@
 
 .banner-marquee-wrapper {
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .banner-marquee-inner {
   display: flex;
   width: 200%;
   animation: banner-marquee 20s linear infinite;
+  align-items: center;
 }
 
 .banner-marquee-item {
   flex: 0 0 50%;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 3rem;
 }
 
 @keyframes banner-marquee {

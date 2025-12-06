@@ -52,9 +52,9 @@ export default function Navigation() {
         }`}
       >
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-20">
+          <div className="relative flex items-center justify-center md:justify-between h-20">
             <a href="/" className="flex items-center space-x-3 group">
-              <img src="/LOGOngsans.png" alt="3D88" className="h-16 w-auto object-contain" />
+              <img src="/LOGOngsans.png" alt="3D88" className="h-14 w-auto object-contain" />
             </a>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -78,7 +78,7 @@ export default function Navigation() {
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden transition-colors duration-300 text-white"
+              className="md:hidden absolute right-0 inset-y-0 flex items-center transition-colors duration-300 text-white"
               aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

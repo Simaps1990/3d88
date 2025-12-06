@@ -4,6 +4,7 @@ import Hero from '../components/Hero';
 import Services from '../components/Services';
 import About from '../components/About';
 import Realizations from '../components/Realizations';
+import GoogleReviews from '../components/GoogleReviews';
 import Contact from '../components/Contact';
 import Footer from '../components/Footer';
 
@@ -33,6 +34,7 @@ export default function Home() {
       <Services />
       <About />
       <Realizations limit={3} showViewAllButton />
+      <GoogleReviews />
       <Contact />
       <Footer />
     </div>

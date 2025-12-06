@@ -44,11 +44,11 @@ export default function Hero() {
             transform: `translateY(${scrollY * 0.3}px)`
           }}
         >
-          <div className="mb-2 md:mb-3 flex justify-center">
-            <img src="/LOGOng.png" alt="3D88" className="w-96 h-96 object-contain" />
+          <div className="mb-1 md:mb-3 flex justify-center">
+            <img src="/LOGOng.png" alt="3D88" className="w-64 h-64 md:w-96 md:h-96 object-contain" />
           </div>
 
-          <p className="text-xl md:text-2xl text-slate-100 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
+          <p className="text-xl md:text-2xl text-slate-100 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
             {lead}
           </p>
 
