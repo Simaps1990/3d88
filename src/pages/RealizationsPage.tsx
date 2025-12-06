@@ -7,7 +7,7 @@ export default function RealizationsPage() {
     <div className="relative">
       <Navigation />
       <main className="pt-20">
-        <Realizations />
+        <Realizations variant="page" />
       </main>
       <Footer />
     </div>

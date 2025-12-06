@@ -54,8 +54,7 @@ export default function Navigation() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             <a href="/" className="flex items-center space-x-3 group">
-              <img src="/pictoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
-              <img src="/textelogoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
+              <img src="/LOGOngsans.png" alt="3D88" className="h-16 w-auto object-contain" />
             </a>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -115,22 +114,38 @@ export default function Navigation() {
       </nav>
 
       {bannerEnabled && bannerHtml.trim() !== '' && (
-        <div className="border-t border-[#18271e] bg-[#18271e]/95 text-[#e1d59d] text-sm md:text-base overflow-hidden">
+        <div
+          className={`fixed left-0 right-0 top-20 z-40 border-t border-[#18271e] bg-[#18271e]/95 text-[#e1d59d] text-sm md:text-base overflow-hidden transition-all duration-300 transform ${
+            navVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+          }`}
+        >
           {bannerLink.trim() ? (
             <a
               href={bannerLink}
+              target="_blank"
+              rel="noopener noreferrer"
               className="block hover:bg-[#101b14]/80 transition-colors"
             >
-              <div className="whitespace-nowrap">
-                <div className="banner-marquee inline-block px-6 py-2 font-medium">
-                  <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+              <div className="banner-marquee-wrapper">
+                <div className="banner-marquee-inner font-medium">
+                  <div className="banner-marquee-item px-6 py-2">
+                    <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+                  </div>
+                  <div className="banner-marquee-item px-6 py-2">
+                    <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+                  </div>
                 </div>
               </div>
             </a>
           ) : (
-            <div className="whitespace-nowrap">
-              <div className="banner-marquee inline-block px-6 py-2 font-medium">
-                <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+            <div className="banner-marquee-wrapper">
+              <div className="banner-marquee-inner font-medium">
+                <div className="banner-marquee-item px-6 py-2">
+                  <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+                </div>
+                <div className="banner-marquee-item px-6 py-2">
+                  <span dangerouslySetInnerHTML={{ __html: bannerHtml }} />
+                </div>
               </div>
             </div>
           )}
@@ -140,7 +155,7 @@ export default function Navigation() {
       {scrolled && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#4a7a54] text-[#e1d59d] shadow-md shadow-black/40 hover:bg-[#3b6344] transition-colors"
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#3caa35] text-white shadow-md shadow-black/40 hover:bg-[#0e6e40] transition-colors"
           aria-label="Remonter en haut de la page"
         >
           <ChevronUp className="w-5 h-5" />

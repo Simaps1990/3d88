@@ -2,15 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-.banner-marquee {
+.banner-marquee-wrapper {
+  overflow: hidden;
+}
+
+.banner-marquee-inner {
+  display: flex;
+  width: 200%;
   animation: banner-marquee 20s linear infinite;
+}
+
+.banner-marquee-item {
+  flex: 0 0 50%;
 }
 
 @keyframes banner-marquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }

@@ -27,6 +27,7 @@ export default function AdminDashboard() {
     image_url: '',
     image_url_2: '',
     image_url_3: '',
+    image_url_4: '',
     published: false
   });
   const [bannerText, setBannerText] = useState('');
@@ -117,7 +118,7 @@ export default function AdminDashboard() {
     setSavingKey(null);
   };
 
-  const handleImageUpload = async (file: File, slot: 1 | 2 | 3) => {
+  const handleImageUpload = async (file: File, slot: 1 | 2 | 3 | 4) => {
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-slot${slot}.${ext}`;
 
@@ -135,7 +136,8 @@ export default function AdminDashboard() {
     setFormData((current) => {
       if (slot === 1) return { ...current, image_url: url };
       if (slot === 2) return { ...current, image_url_2: url };
-      return { ...current, image_url_3: url };
+      if (slot === 3) return { ...current, image_url_3: url };
+      return { ...current, image_url_4: url };
     });
   };
 
@@ -177,6 +179,7 @@ export default function AdminDashboard() {
       image_url: '',
       image_url_2: '',
       image_url_3: '',
+      image_url_4: '',
       published: false
     });
     loadData();
@@ -220,6 +223,7 @@ export default function AdminDashboard() {
       image_url: realization.image_url,
       image_url_2: realization.image_url_2 || '',
       image_url_3: realization.image_url_3 || '',
+      image_url_4: realization.image_url_4 || '',
       published: realization.published
     });
     setShowModal(true);
@@ -313,8 +317,7 @@ export default function AdminDashboard() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-20">
             <a href="/" className="flex items-center space-x-3">
-              <img src="/pictoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
-              <img src="/textelogoblanc.png" alt="3D88" className="h-10 w-auto object-contain" />
+              <img src="/LOGOngsans.png" alt="3D88" className="h-16 w-auto object-contain" />
               <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-white ml-2">
                 Mon espace perso
               </span>
@@ -475,6 +478,7 @@ export default function AdminDashboard() {
                     image_url: '',
                     image_url_2: '',
                     image_url_3: '',
+                    image_url_4: '',
                     published: false
                   });
                   setShowModal(true);
@@ -853,7 +857,7 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Images du projet (jusqu'à 3)
+                  Images du projet (jusqu'à 4)
                 </label>
 
                 <div className="space-y-4">
@@ -939,6 +943,35 @@ export default function AdminDashboard() {
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) handleImageUpload(file, 3);
+                      }}
+                      className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Image 4 (optionnelle)</p>
+                    {formData.image_url_4 && (
+                      <div className="flex items-center space-x-3 mb-2">
+                        <img
+                          src={formData.image_url_4}
+                          alt="Aperçu image 4"
+                          className="w-16 h-16 object-cover rounded-lg border border-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url_4: '' })}
+                          className="text-xs text-red-600 hover:text-red-700"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 4);
                       }}
                       className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
                     />

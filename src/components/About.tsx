@@ -10,7 +10,7 @@ export default function About() {
     'about_content',
     "Je suis passionné par la conception 3D et l'impression 3D. 3D88 vous accompagne de l'idée au prototype puis à la pièce finale, pour des projets uniques ou des petites séries.\n\nBasé en Isère, je travaille avec des particuliers, des professionnels et des collectivités pour donner vie à des pièces techniques, des objets décoratifs ou des maquettes sur mesure."
   );
-  const imageUrl = useSiteText('about_image_url', '/logo3d.png');
+  const imageUrl = useSiteText('about_image_url', '/Picto.png');
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -45,7 +45,7 @@ export default function About() {
             }`}
           >
           <div className="order-2 md:order-1 space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#4a7a54]">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[#3caa35]">
               {title}
             </h2>
             <p className="text-lg text-slate-100 leading-relaxed whitespace-pre-line">

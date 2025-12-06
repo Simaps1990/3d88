@@ -12,7 +12,7 @@ export default function Hero() {
     "De l'idée à la réalité, je transforme vos projets en objets concrets grâce à la modélisation et l'impression 3D professionnelle."
   );
   const ctaPrimary = useSiteText('hero_cta_primary', 'Demander un devis');
-  const ctaSecondary = useSiteText('hero_cta_secondary', 'En savoir plus');
+  const ctaSecondary = useSiteText('hero_cta_secondary', 'Voir mes réalisations');
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -44,8 +44,8 @@ export default function Hero() {
             transform: `translateY(${scrollY * 0.3}px)`
           }}
         >
-          <div className="mb-8 flex justify-center">
-            <img src="/logo3d.png" alt="3D88" className="w-56 h-56 object-contain" />
+          <div className="mb-2 md:mb-3 flex justify-center">
+            <img src="/LOGOng.png" alt="3D88" className="w-96 h-96 object-contain" />
           </div>
 
           <p className="text-xl md:text-2xl text-slate-100 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
@@ -55,7 +55,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-[#4a7a54] hover:bg-[#3b6344] text-[#e1d59d] rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
+              className="px-8 py-4 bg-[#3caa35] hover:bg-[#0e6e40] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaPrimary}
             </a>
