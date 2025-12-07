@@ -1,60 +1,87 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface Review {
-  id: string;
+  id: number;
   authorName: string;
   rating: number;
   text: string;
-  relativeTime: string;
+  month?: number | null;
+  year?: number | null;
+  sourceUrl?: string | null;
 }
 
 const GOOGLE_REVIEWS_URL =
   'https://www.google.com/search?sca_esv=d929fa6a8c66904f&hl=fr-FR&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-E0wEE17-jJZvHhdKzWiXV1I8pqR-Bni6b-joT1zoNCMH5mwhRGA2hDw29iftFvku3PDXJl43JnkLJGImPurUaCPGLy3g&q=3D88+Avis&sa=X&ved=2ahUKEwjCyaaikqqRAxUqKvsDHdTzJt8Q0bkNegQIIhAE&biw=1536&bih=730&dpr=1.25';
 
-const REVIEWS: Review[] = [
-  {
-    id: 'richard-peterlini',
-    authorName: 'Richard Peterlini',
-    rating: 5,
-    relativeTime: 'il y a 3 mois',
-    text:
-      "Vendeur extrêmement pro et agréable, excellente communication, travail de qualité pour une commande 100% sur mesure. Travail de minutie et tarif complètement abordable ! Impossible de ne pas recommander cette boutique ! Je reviendrais avec plaisir 👍",
-  },
-  {
-    id: 'antoine-cervek',
-    authorName: 'Antoine Cervek',
-    rating: 5,
-    relativeTime: 'il y a 2 mois',
-    text:
-      'Super travail, réalisation de support pour mes figurines. Travail soigné et rapide. Super communication, je recommande',
-  },
-  {
-    id: 'schvartz-alexis',
-    authorName: 'Schvartz Alexis',
-    rating: 5,
-    relativeTime: 'il y a 2 mois',
-    text: 'Entreprise sérieuse et réactive ! Je recommande',
-  },
+const MONTH_LABELS = [
+  '',
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
 ];
 
 export default function GoogleReviews() {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (REVIEWS.length === 0) return;
+    const loadReviews = async () => {
+      const { data, error } = await supabase
+        .from('google_reviews')
+        .select('id, author_name, rating, review_text, source_url, review_month, review_year')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        const mapped: Review[] = data.map((row: any) => ({
+          id: row.id,
+          authorName: row.author_name,
+          rating: row.rating,
+          text: row.review_text,
+          month: row.review_month,
+          year: row.review_year,
+          sourceUrl: row.source_url,
+        }));
+        setReviews(mapped);
+        setActiveIndex(0);
+      }
+    };
+
+    void loadReviews();
+  }, []);
+
+  useEffect(() => {
+    if (reviews.length === 0) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % REVIEWS.length);
+      setActiveIndex((prev) => (prev + 1) % reviews.length);
     }, 7000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [reviews.length]);
 
-  if (REVIEWS.length === 0) {
+  if (reviews.length === 0) {
     return null;
   }
 
-  const activeReview = REVIEWS[activeIndex];
+  const activeReview = reviews[activeIndex];
+
+  const dateLabel =
+    activeReview.month && activeReview.year
+      ? `${MONTH_LABELS[activeReview.month]} ${activeReview.year}`
+      : '';
 
   return (
     <section className="bg-slate-900 py-16">
@@ -92,18 +119,18 @@ export default function GoogleReviews() {
             <p className="text-slate-100 text-base md:text-lg leading-relaxed mb-4">
               « {activeReview.text} »
             </p>
-            <p className="text-sm text-slate-400">{activeReview.relativeTime}</p>
+            {dateLabel && <p className="text-sm text-slate-400">{dateLabel}</p>}
           </div>
 
           <div className="flex justify-center gap-2 mt-6">
-            {REVIEWS.map((review, index) => (
+            {reviews.map((review, index) => (
               <button
                 key={review.id}
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 className={
                   'w-2.5 h-2.5 rounded-full transition-colors ' +
-                  (index === activeIndex ? 'bg-[#3caa35]' : 'bg-slate-600')
+                  (index === activeIndex ? 'bg-[#0e6e40]' : 'bg-slate-600')
                 }
                 aria-label={`Afficher l'avis ${index + 1}`}
               />
@@ -116,7 +143,7 @@ export default function GoogleReviews() {
             href={GOOGLE_REVIEWS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-8 py-3 rounded-lg bg-[#3caa35] hover:bg-[#0e6e40] text-white font-semibold transition-colors"
+            className="inline-flex items-center justify-center px-8 py-3 rounded-lg bg-[#0e6e40] hover:bg-[#3caa35] text-white font-semibold transition-colors"
           >
             Voir les avis
           </a>

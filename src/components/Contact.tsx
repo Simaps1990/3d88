@@ -284,7 +284,7 @@ export default function Contact() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-6 py-4 bg-[#3caa35] hover:bg-[#0e6e40] disabled:bg-slate-600 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-[#3caa35]/50 disabled:transform-none disabled:shadow-none flex items-center justify-center space-x-2"
+                className="w-full px-6 py-4 bg-[#0e6e40] hover:bg-[#3caa35] disabled:bg-slate-600 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-[#3caa35]/50 disabled:transform-none disabled:shadow-none flex items-center justify-center space-x-2"
               >
                 {loading ? (
                   <span>Envoi en cours...</span>

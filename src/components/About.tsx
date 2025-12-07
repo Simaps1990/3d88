@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Instagram, Facebook } from 'lucide-react';
 import { useSiteText } from '../hooks/useSiteText';
 
 export default function About() {
@@ -51,6 +52,30 @@ export default function About() {
             <p className="text-lg text-slate-100 leading-relaxed whitespace-pre-line">
               {content}
             </p>
+
+            <div className="flex flex-col items-start gap-1 text-[#4a7a54] text-sm mt-2">
+              <span>Suivez-moi sur les réseaux :</span>
+              <div className="flex items-center gap-4">
+                <a
+                  href="https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
+                  aria-label="Instagram 3D88"
+                >
+                  <Instagram className="w-5 h-5 md:w-6 md:h-6" />
+                </a>
+                <a
+                  href="https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
+                  aria-label="Facebook 3D88"
+                >
+                  <Facebook className="w-5 h-5 md:w-6 md:h-6" />
+                </a>
+              </div>
+            </div>
           </div>
 
           <div className="order-1 md:order-2 flex justify-center">

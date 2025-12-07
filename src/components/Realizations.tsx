@@ -280,7 +280,7 @@ export default function Realizations({ limit, showViewAllButton, variant }: Real
             <div className="mt-12 text-center">
               <a
                 href="/realisations"
-                className="inline-flex items-center px-8 py-3 bg-[#3caa35] hover:bg-[#0e6e40] text-white rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center px-8 py-3 bg-[#0e6e40] hover:bg-[#3caa35] text-white rounded-lg font-semibold transition-colors"
               >
                 {viewAllLabel}
               </a>
@@ -313,7 +313,7 @@ export default function Realizations({ limit, showViewAllButton, variant }: Real
                             e.stopPropagation();
                             goToPrevImage();
                           }}
-                          className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-[#3caa35] text-white hover:bg-[#0e6e40] shadow-lg shadow-black/30 transition-colors"
+                          className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-[#0e6e40] text-white hover:bg-[#3caa35] shadow-lg shadow-black/30 transition-colors"
                           aria-label="Image précédente"
                         >
                           <span className="-mt-2 md:-mt-3 text-3xl md:text-4xl leading-none">‹</span>
@@ -333,7 +333,7 @@ export default function Realizations({ limit, showViewAllButton, variant }: Real
                         <button
                           type="button"
                           onClick={() => setSelectedRealization(null)}
-                          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#3caa35] text-white hover:bg-[#0e6e40] shadow-lg shadow-black/30 transition-colors"
+                          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#0e6e40] text-white hover:bg-[#3caa35] shadow-lg shadow-black/30 transition-colors"
                           aria-label="Fermer la réalisation"
                         >
                           <span className="sr-only">Fermer</span>
@@ -348,7 +348,7 @@ export default function Realizations({ limit, showViewAllButton, variant }: Real
                             e.stopPropagation();
                             goToNextImage();
                           }}
-                          className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-[#3caa35] text-white hover:bg-[#0e6e40] shadow-lg shadow-black/30 transition-colors"
+                          className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-[#0e6e40] text-white hover:bg-[#3caa35] shadow-lg shadow-black/30 transition-colors"
                           aria-label="Image suivante"
                         >
                           <span className="-mt-2 md:-mt-3 text-3xl md:text-4xl leading-none">›</span>

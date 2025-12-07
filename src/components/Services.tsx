@@ -2,26 +2,38 @@ import { Box, Layers, Wrench, Lightbulb } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSiteText } from '../hooks/useSiteText';
 
-const services = [
+const servicesConfig = [
   {
     icon: Box,
-    title: 'Modélisation 3D',
-    description: 'Création de modèles 3D sur mesure adaptés à vos besoins spécifiques, du concept à la réalisation finale.'
+    titleKey: 'service_1_title',
+    defaultTitle: 'Modélisation 3D',
+    descriptionKey: 'service_1_description',
+    defaultDescription:
+      'Création de modèles 3D sur mesure adaptés à vos besoins spécifiques, du concept à la réalisation finale.'
   },
   {
     icon: Layers,
-    title: 'Impression 3D',
-    description: 'Impression haute précision en PLA, ABS, PETG et autres matériaux pour des résultats professionnels.'
+    titleKey: 'service_2_title',
+    defaultTitle: 'Impression 3D',
+    descriptionKey: 'service_2_description',
+    defaultDescription:
+      'Impression haute précision en PLA, ABS, PETG et autres matériaux pour des résultats professionnels.'
   },
   {
     icon: Wrench,
-    title: 'Prototypage',
-    description: 'Développement rapide de prototypes fonctionnels pour tester et valider vos idées avant production.'
+    titleKey: 'service_3_title',
+    defaultTitle: 'Prototypage',
+    descriptionKey: 'service_3_description',
+    defaultDescription:
+      'Développement rapide de prototypes fonctionnels pour tester et valider vos idées avant production.'
   },
   {
     icon: Lightbulb,
-    title: 'Conseil & Expertise',
-    description: 'Accompagnement personnalisé pour optimiser vos projets et choisir les meilleures solutions techniques.'
+    titleKey: 'service_4_title',
+    defaultTitle: 'Conseil & Expertise',
+    descriptionKey: 'service_4_description',
+    defaultDescription:
+      'Accompagnement personnalisé pour optimiser vos projets et choisir les meilleures solutions techniques.'
   }
 ];
 
@@ -31,6 +43,12 @@ export default function Services() {
 
   const title = useSiteText('services_title', 'Mes Services');
   const subtitle = useSiteText('services_subtitle', 'Une expertise complète pour donner vie à vos projets');
+
+  const services = servicesConfig.map((service) => ({
+    icon: service.icon,
+    title: useSiteText(service.titleKey, service.defaultTitle),
+    description: useSiteText(service.descriptionKey, service.defaultDescription)
+  }));
 
   useEffect(() => {
     const observer = new IntersectionObserver(

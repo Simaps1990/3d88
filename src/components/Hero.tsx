@@ -13,6 +13,7 @@ export default function Hero() {
   );
   const ctaPrimary = useSiteText('hero_cta_primary', 'Demander un devis');
   const ctaSecondary = useSiteText('hero_cta_secondary', 'Voir mes réalisations');
+  const backgroundUrl = useSiteText('hero_background_url', "/fond.jpg");
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -30,7 +31,7 @@ export default function Hero() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/fond.jpg')",
+          backgroundImage: `url('${backgroundUrl || "/fond.jpg"}')`,
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       />
@@ -55,7 +56,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-[#3caa35] hover:bg-[#0e6e40] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
+              className="px-8 py-4 bg-[#0e6e40] hover:bg-[#3caa35] text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-black/70 hover:shadow-2xl hover:shadow-black/80"
             >
               {ctaPrimary}
             </a>

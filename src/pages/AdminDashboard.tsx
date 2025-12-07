@@ -18,6 +18,20 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'realizations' | 'contents' | 'bandeau' | 'reviews'>('realizations');
   const [realizations, setRealizations] = useState<Realization[]>([]);
   const [siteTexts, setSiteTexts] = useState<SiteText[]>([]);
+  const [reviews, setReviews] = useState<{
+    id: number;
+    author_name: string;
+    rating: number;
+    review_text: string;
+    review_month: number | null;
+    review_year: number | null;
+    is_published: boolean;
+    display_order: number | null;
+  }[]>([]);
+  const [reviewSaving, setReviewSaving] = useState<boolean[]>(Array(5).fill(false));
+  const [reviewSaved, setReviewSaved] = useState<boolean[]>(Array(5).fill(false));
+  const [dirtyKeys, setDirtyKeys] = useState<string[]>([]);
+  const [savedKeys, setSavedKeys] = useState<string[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingRealization, setEditingRealization] = useState<Realization | null>(null);
@@ -77,7 +91,14 @@ export default function AdminDashboard() {
         }
       }
     } else if (activeTab === 'reviews') {
-      // TODO: Ajouter la logique métier pour les avis
+      const { data } = await supabase
+        .from('google_reviews')
+        .select('id, author_name, rating, review_text, review_month, review_year, is_published, display_order')
+        .order('display_order', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false });
+      if (data) {
+        setReviews(data as any);
+      }
     }
   };
 
@@ -91,34 +112,7 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
-  const handleAboutImageUpload = async (file: File, text: SiteText) => {
-    const ext = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-about.${ext}`;
-
-    const { data, error } = await supabase.storage.from('realizations').upload(fileName, file);
-    if (error || !data?.path) {
-      console.error('Erreur upload image À propos', error);
-      return;
-    }
-
-    const { data: publicData } = supabase.storage.from('realizations').getPublicUrl(data.path);
-    const url = publicData?.publicUrl || '';
-
-    const updated: SiteText = { ...text, value: url };
-    setSiteTexts((current) =>
-      current.map((t) => (t.key === text.key ? updated : t))
-    );
-
-    setSavingKey(text.key);
-    await supabase
-      .from('site_texts')
-      .upsert({
-        key: updated.key,
-        value: updated.value,
-        description: updated.description,
-      });
-    setSavingKey(null);
-  };
+  // Fonctions d'upload d'image supprimées pour l'instant car non utilisées dans l'interface
 
   const handleImageUpload = async (file: File, slot: 1 | 2 | 3 | 4) => {
     const ext = file.name.split('.').pop();
@@ -144,9 +138,24 @@ export default function AdminDashboard() {
   };
 
   const handleSiteTextChange = (key: string, value: string) => {
-    setSiteTexts((current) =>
-      current.map((text) => (text.key === key ? { ...text, value } : text))
-    );
+    setSiteTexts((current) => {
+      const exists = current.some((text) => text.key === key);
+      if (!exists) {
+        return [
+          ...current,
+          {
+            key,
+            value,
+            description: '',
+          } as SiteText,
+        ];
+      }
+
+      return current.map((text) => (text.key === key ? { ...text, value } : text));
+    });
+
+    setDirtyKeys((current) => (current.includes(key) ? current : [...current, key]));
+    setSavedKeys((current) => current.filter((k) => k !== key));
   };
 
   const handleSaveSiteText = async (text: SiteText) => {
@@ -159,6 +168,26 @@ export default function AdminDashboard() {
         description: text.description,
       });
     setSavingKey(null);
+
+    setDirtyKeys((current) => current.filter((k) => k !== text.key));
+    setSavedKeys((current) => (current.includes(text.key) ? current : [...current, text.key]));
+  };
+
+  const getSaveButtonClasses = (key: string) => {
+    const base = 'h-9 px-4 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors';
+    if (savingKey === key) {
+      return `${base} bg-slate-400 text-white cursor-default`;
+    }
+    if (savedKeys.includes(key)) {
+      return `${base} bg-[#3caa35] hover:bg-[#1f4d28] text-white`;
+    }
+    return `${base} bg-slate-900 hover:bg-slate-800 text-white`;
+  };
+
+  const getSaveButtonLabel = (key: string) => {
+    if (savingKey === key) return 'Enregistrement...';
+    if (savedKeys.includes(key)) return 'Enregistré';
+    return 'Enregistrer';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -317,7 +346,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-white pt-20">
       <nav className="bg-[#101b14]/95 backdrop-blur-md shadow-lg border-b border-slate-900/60 fixed top-0 left-0 right-0 z-40">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between h-20">
+          <div className="relative flex items-center justify-center md:justify-between h-20">
             <a href="/" className="flex items-center space-x-3">
               <img src="/LOGOngsans.png" alt="3D88" className="h-14 w-auto object-contain" />
               <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-white ml-2">
@@ -344,7 +373,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#4a7a54]"
+              className="md:hidden absolute right-0 inset-y-0 inline-flex items-center justify-center px-3 rounded-md text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#4a7a54]"
               aria-label="Ouvrir le menu admin"
             >
               <span className="sr-only">Ouvrir le menu</span>
@@ -368,26 +397,26 @@ export default function AdminDashboard() {
           {isMenuOpen && (
             <div className="mt-3 flex flex-col space-y-4 md:hidden">
               {/* Bloc retour au site */}
-              <div className="border-b border-slate-800 pb-4">
+              <div className="border-b border-slate-800 pb-3">
                 <a
                   href="/"
-                  className="inline-flex items-center justify-center w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-white/40 text-white hover:bg-white/10"
+                  className="inline-flex items-center w-full px-4 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
                 >
                   Retour au site
                 </a>
               </div>
 
               {/* Bloc onglets backoffice */}
-              <div className="flex flex-col space-y-2">
+              <nav className="flex flex-col">
                 <button
                   onClick={() => {
                     setActiveTab('realizations');
                     setIsMenuOpen(false);
                   }}
-                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeTab === 'realizations'
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                      ? 'bg-white text-slate-900'
+                      : 'text-white hover:bg-white/10'
                   }`}
                 >
                   Réalisations
@@ -397,10 +426,10 @@ export default function AdminDashboard() {
                     setActiveTab('contents');
                     setIsMenuOpen(false);
                   }}
-                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeTab === 'contents'
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                      ? 'bg-white text-slate-900'
+                      : 'text-white hover:bg-white/10'
                   }`}
                 >
                   Contenus
@@ -410,10 +439,10 @@ export default function AdminDashboard() {
                     setActiveTab('bandeau');
                     setIsMenuOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeTab === 'bandeau'
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                      ? 'bg-white text-slate-900'
+                      : 'text-white hover:bg-white/10'
                   }`}
                 >
                   Bandeau
@@ -423,15 +452,15 @@ export default function AdminDashboard() {
                     setActiveTab('reviews');
                     setIsMenuOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`w-full text-left px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                     activeTab === 'reviews'
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-transparent text-white border-white/20 hover:bg-white/5'
+                      ? 'bg-white text-slate-900'
+                      : 'text-white hover:bg-white/10'
                   }`}
                 >
-                  Avis (en développement)
+                  Avis
                 </button>
-              </div>
+              </nav>
 
               {/* Bloc déconnexion */}
               <button
@@ -447,7 +476,7 @@ export default function AdminDashboard() {
       </nav>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="max-w-5xl mx-auto flex flex-wrap gap-3 mb-8">
+        <div className="max-w-6xl mx-auto hidden md:flex flex-wrap gap-3 mb-8">
           <button
             onClick={() => setActiveTab('realizations')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
@@ -486,12 +515,12 @@ export default function AdminDashboard() {
                 : 'bg-white text-slate-700 hover:bg-slate-100'
             }`}
           >
-            Avis (en développement)
+            Avis
           </button>
         </div>
 
         {activeTab === 'realizations' && (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Réalisations</h2>
               <button
@@ -599,23 +628,232 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'reviews' && (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Avis Google</h2>
-            <p className="text-sm text-slate-600 mb-4">
-              Cette section est actuellement en développement.
+            <p className="text-sm text-slate-600 mb-6 max-w-3xl">
+              Gérez ici jusqu'à 5 avis qui seront affichés sur la page d'accueil.
             </p>
-            <p className="text-sm text-slate-500">
-              Vous pouvez déjà gérer l&apos;affichage des avis sur le site public dans la page d&apos;accueil.
-              Ici, un futur module permettra de connecter et d&apos;organiser les avis Google.
-            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {Array.from({ length: 5 }).map((_, index) => {
+                const review = reviews[index];
+                const id = review?.id;
+
+                const handleSave = async () => {
+                  setReviewSaved((current) => {
+                    const next = [...current];
+                    next[index] = false;
+                    return next;
+                  });
+                  setReviewSaving((current) => {
+                    const next = [...current];
+                    next[index] = true;
+                    return next;
+                  });
+
+                  const form = (document.getElementById(`review-form-${index}`) as HTMLFormElement | null);
+                  if (!form) return;
+
+                  const formData = new FormData(form);
+                  const author_name = (formData.get('author_name') as string).trim();
+                  const rating = Number(formData.get('rating') || 5);
+                  const review_text = (formData.get('review_text') as string).trim();
+                  const review_month = formData.get('review_month') ? Number(formData.get('review_month')) : null;
+                  const review_year = formData.get('review_year') ? Number(formData.get('review_year')) : null;
+                  const is_published = formData.get('is_published') === 'on';
+                  const display_order = index + 1;
+
+                  if (!author_name || !review_text) {
+                    alert('Merci de remplir au minimum le nom et le commentaire.');
+                    setReviewSaving((current) => {
+                      const next = [...current];
+                      next[index] = false;
+                      return next;
+                    });
+                    return;
+                  }
+
+                  try {
+                    if (id) {
+                      await supabase
+                        .from('google_reviews')
+                        .update({
+                          author_name,
+                          rating,
+                          review_text,
+                          review_month,
+                          review_year,
+                          is_published,
+                          display_order,
+                        })
+                        .eq('id', id);
+                    } else {
+                      await supabase.from('google_reviews').insert([
+                        {
+                          author_name,
+                          rating,
+                          review_text,
+                          review_month,
+                          review_year,
+                          is_published,
+                          display_order,
+                        },
+                      ]);
+                    }
+
+                    await loadData();
+
+                    setReviewSaved((current) => {
+                      const next = [...current];
+                      next[index] = true;
+                      return next;
+                    });
+                  } finally {
+                    setReviewSaving((current) => {
+                      const next = [...current];
+                      next[index] = false;
+                      return next;
+                    });
+                  }
+                };
+
+                return (
+                  <form
+                    key={index}
+                    id={`review-form-${index}`}
+                    className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm flex flex-col gap-3"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void handleSave();
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        Avis #{index + 1}
+                      </h3>
+                      <span className="text-[11px] text-slate-500">
+                        Ordre&nbsp;: {index + 1}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Nom du client
+                        </label>
+                        <input
+                          type="text"
+                          name="author_name"
+                          defaultValue={review?.author_name || ''}
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-slate-700 mb-1">
+                            Note (1 à 5)
+                          </label>
+                          <select
+                            name="rating"
+                            defaultValue={review?.rating?.toString() || '5'}
+                            className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                          >
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <option key={n} value={n}>
+                                {n} ★
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex-1 flex items-end gap-2">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-700 mb-1">
+                              Mois
+                            </label>
+                            <input
+                              type="number"
+                              name="review_month"
+                              min={1}
+                              max={12}
+                              defaultValue={review?.review_month ?? ''}
+                              className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-700 mb-1">
+                              Année
+                            </label>
+                            <input
+                              type="number"
+                              name="review_year"
+                              min={2000}
+                              max={2100}
+                              defaultValue={review?.review_year ?? ''}
+                              className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Commentaire
+                        </label>
+                        <textarea
+                          name="review_text"
+                          defaultValue={review?.review_text || ''}
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 resize-y min-h-[80px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-1">
+                      <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          name="is_published"
+                          checked={review?.is_published ?? false}
+                          onChange={(e) => {
+                            if (!review) return;
+                            const next = [...reviews];
+                            next[index] = { ...review, is_published: e.target.checked };
+                            setReviews(next as any);
+                          }}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Afficher sur le site
+                      </label>
+
+                      <button
+                        type="submit"
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                          reviewSaved[index]
+                            ? 'bg-[#3caa35] hover:bg-[#1f4d28] text-white'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white'
+                        }`}
+                      >
+                        {reviewSaving[index]
+                          ? 'Enregistrement...'
+                          : reviewSaved[index]
+                          ? 'Enregistré'
+                          : 'Enregistrer'}
+                      </button>
+                    </div>
+                  </form>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {activeTab === 'contents' && (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Contenus du site</h2>
             <p className="text-sm text-slate-600 mb-6 max-w-3xl">
-              Modifiez ici les textes affichés sur le site (hero, sections, footer, etc.).
+              Modifiez ici les textes principaux du site. Les réalisations et les avis disposent de leurs
+              propres onglets.
             </p>
 
             {siteTexts.length === 0 ? (
@@ -623,120 +861,397 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-8">
                 {(() => {
-                  const groups = siteTexts.reduce<Record<string, SiteText[]>>((acc, text) => {
-                    const [prefix] = text.key.split('_');
-                    const section = prefix || 'other';
-                    if (!acc[section]) acc[section] = [];
-                    acc[section].push(text);
-                    return acc;
-                  }, {});
-
-                  const orderedSections = [
-                    'hero',
-                    'services',
-                    'about',
-                    'realizations',
-                    'contact',
-                    'footer',
-                    'nav',
-                    'legal',
-                    'meta',
-                    'other',
-                  ];
-
-                  const sectionLabels: Record<string, string> = {
-                    hero: "Page d'accueil – Hero",
-                    services: 'Section Services',
-                    about: 'Section À propos',
-                    realizations: 'Section Réalisations',
-                    contact: 'Section Contact',
-                    footer: 'Pied de page',
-                    nav: 'Navigation / Menu',
-                    legal: 'Page Mentions légales',
-                    meta: 'SEO / Meta données',
-                    other: 'Autres contenus',
+                  const findText = (key: string, fallbackLabel: string): SiteText => {
+                    const existing = siteTexts.find((t) => t.key === key);
+                    if (existing) return existing;
+                    return { key, value: '', description: fallbackLabel } as SiteText;
                   };
 
-                  return orderedSections
-                    .filter((section) => groups[section] && groups[section].length > 0)
-                    .map((section) => {
-                      const texts = groups[section];
-                      const label = sectionLabels[section] || 'Autres contenus';
+                  const heroLead = findText('hero_lead', "Texte d'introduction affiché sous le logo");
+                  const heroCtaPrimary = findText('hero_cta_primary', 'Texte du bouton principal');
+                  const heroCtaSecondary = findText('hero_cta_secondary', 'Texte du bouton secondaire');
+                  const aboutTitle = findText('about_title', 'Titre de la section À propos');
+                  const aboutContent = findText('about_content', 'Texte de présentation');
 
-                      return (
-                        <section key={section} className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-900">{label}</h3>
-                            <span className="text-xs uppercase tracking-wide text-slate-400 font-mono">
-                              {section}
-                            </span>
+                  // Si aucune valeur n'est encore enregistrée en base, on pré-remplit
+                  // avec les mêmes valeurs par défaut que dans le composant About.tsx
+                  if (!aboutTitle.value) {
+                    aboutTitle.value = 'À propos de 3D88';
+                  }
+                  if (!aboutContent.value) {
+                    aboutContent.value =
+                      "Je suis passionné par la conception 3D et l'impression 3D. 3D88 vous accompagne de l'idée au prototype puis à la pièce finale, pour des projets uniques ou des petites séries.\n\nBasé en Isère, je travaille avec des particuliers, des professionnels et des collectivités pour donner vie à des pièces techniques, des objets décoratifs ou des maquettes sur mesure.";
+                  }
+
+                  const servicesTitle = findText('services_title', 'Titre de la section Services');
+                  const servicesSubtitle = findText('services_subtitle', 'Sous-titre des services');
+
+                  const service1Title = findText('service_1_title', 'Service 1 – titre');
+                  const service1Description = findText('service_1_description', 'Service 1 – description');
+                  const service2Title = findText('service_2_title', 'Service 2 – titre');
+                  const service2Description = findText('service_2_description', 'Service 2 – description');
+                  const service3Title = findText('service_3_title', 'Service 3 – titre');
+                  const service3Description = findText('service_3_description', 'Service 3 – description');
+                  const service4Title = findText('service_4_title', 'Service 4 – titre');
+                  const service4Description = findText('service_4_description', 'Service 4 – description');
+
+                  // Valeurs par défaut identiques à celles du composant Services.tsx
+                  if (!service1Title.value) service1Title.value = 'Modélisation 3D';
+                  if (!service1Description.value)
+                    service1Description.value =
+                      'Création de modèles 3D sur mesure adaptés à vos besoins spécifiques, du concept à la réalisation finale.';
+
+                  if (!service2Title.value) service2Title.value = 'Impression 3D';
+                  if (!service2Description.value)
+                    service2Description.value =
+                      'Impression haute précision en PLA, ABS, PETG et autres matériaux pour des résultats professionnels.';
+
+                  if (!service3Title.value) service3Title.value = 'Prototypage';
+                  if (!service3Description.value)
+                    service3Description.value =
+                      'Développement rapide de prototypes fonctionnels pour tester et valider vos idées avant production.';
+
+                  if (!service4Title.value) service4Title.value = 'Conseil & Expertise';
+                  if (!service4Description.value)
+                    service4Description.value =
+                      'Accompagnement personnalisé pour optimiser vos projets et choisir les meilleures solutions techniques.';
+
+                  const contactTitle = findText('contact_title', 'Titre de la section Contact');
+                  const contactSubtitle = findText('contact_subtitle', 'Sous-titre de contact');
+
+                  const footerText = findText('footer_text', 'Texte du pied de page');
+
+                  const navServices = findText('nav_services_label', 'Libellé lien Services');
+                  const navAbout = findText('nav_about_label', 'Libellé lien À propos');
+                  const navRealisations = findText('nav_realisations_label', 'Libellé lien Réalisations');
+                  const navContact = findText('nav_contact_label', 'Libellé lien Contact');
+
+                  const legalTitle = findText('legal_title', 'Titre page Mentions légales');
+                  const legalSubtitle = findText('legal_subtitle', 'Sous-titre Mentions légales');
+                  const legalEditorTitle = findText('legal_editor_title', 'Titre bloc éditeur');
+                  const legalEditorBody = findText('legal_editor_body', 'Texte bloc éditeur');
+                  const legalContactTitle = findText('legal_contact_title', 'Titre bloc contact');
+                  const legalContactBody = findText('legal_contact_body', 'Texte bloc contact');
+                  const legalIpTitle = findText('legal_ip_title', 'Titre bloc propriété intellectuelle');
+                  const legalIpBody = findText('legal_ip_body', 'Texte bloc propriété intellectuelle');
+
+                  return (
+                    <>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Hero – Texte principal</h3>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                <span>{heroLead.description}</span>
+                                {dirtyKeys.includes(heroLead.key) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                    Modifié
+                                  </span>
+                                )}
+                              </p>
+                              <textarea
+                                value={heroLead.value}
+                                onChange={(e) => handleSiteTextChange(heroLead.key, e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleSaveSiteText(heroLead)}
+                              disabled={savingKey === heroLead.key}
+                              className={getSaveButtonClasses(heroLead.key)}
+                            >
+                              {getSaveButtonLabel(heroLead.key)}
+                            </button>
                           </div>
+                        </div>
+                      </section>
 
-                          <div className="space-y-4">
-                            {texts.map((text) => (
-                              <div
-                                key={text.key}
-                                className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className="font-mono text-xs text-slate-500">{text.key}</span>
-                                    </div>
-                                    {text.description && (
-                                      <p className="text-xs text-slate-500 mb-2">{text.description}</p>
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Hero – Boutons</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[heroCtaPrimary, heroCtaSecondary].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-1">
+                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                    <span>{text.description}</span>
+                                    {dirtyKeys.includes(text.key) && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                        Modifié
+                                      </span>
                                     )}
-
-                                    {text.key === 'about_image_url' ? (
-                                      <div className="space-y-3">
-                                        {text.value && (
-                                          <div className="flex items-center space-x-3">
-                                            <img
-                                              src={text.value}
-                                              alt="Aperçu image À propos"
-                                              className="w-20 h-20 object-cover rounded-lg border border-slate-200"
-                                            />
-                                            <span className="text-xs text-slate-500 break-all max-w-xs">
-                                              {text.value}
-                                            </span>
-                                          </div>
-                                        )}
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                              void handleAboutImageUpload(file, text);
-                                            }
-                                          }}
-                                          className="block w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <textarea
-                                        value={text.value}
-                                        onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
-                                      />
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col items-end space-y-2">
-                                    <button
-                                      onClick={() => handleSaveSiteText(text)}
-                                      disabled={savingKey === text.key}
-                                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white rounded-lg text-sm font-semibold transition-colors"
-                                    >
-                                      {savingKey === text.key ? 'Enregistrement...' : 'Enregistrer'}
-                                    </button>
-                                  </div>
+                                  </p>
+                                  <input
+                                    type="text"
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                  />
                                 </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
                               </div>
-                            ))}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Services</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {[servicesTitle, servicesSubtitle].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                    <span>{text.description}</span>
+                                    {dirtyKeys.includes(text.key) && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                        Modifié
+                                      </span>
+                                    )}
+                                  </p>
+                                  <textarea
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Services – Cartes</h3>
+                        <p className="text-xs text-slate-500">
+                          Ces champs contrôlent les titres et descriptions des 4 cartes services visibles sur la page
+                          d&apos;accueil.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[service1Title, service1Description, service2Title, service2Description, service3Title, service3Description, service4Title, service4Description].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                    <span>{text.description}</span>
+                                    {dirtyKeys.includes(text.key) && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                        Modifié
+                                      </span>
+                                    )}
+                                  </p>
+                                  {text.key.includes('_description') ? (
+                                    <textarea
+                                      value={text.value}
+                                      onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                    />
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={text.value}
+                                      onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                    />
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">À propos – Titre et contenu</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {[aboutTitle, aboutContent].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                    <span>{text.description}</span>
+                                    {dirtyKeys.includes(text.key) && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                        Modifié
+                                      </span>
+                                    )}
+                                  </p>
+                                  <textarea
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Contact</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {[contactTitle, contactSubtitle].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                  <textarea
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+
+
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Pied de page</h3>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                <span>Texte du bas de page</span>
+                                {dirtyKeys.includes(footerText.key) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                    Modifié
+                                  </span>
+                                )}
+                              </p>
+                              <textarea
+                                value={footerText.value}
+                                onChange={(e) => handleSiteTextChange(footerText.key, e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleSaveSiteText(footerText)}
+                              disabled={savingKey === footerText.key}
+                              className={getSaveButtonClasses(footerText.key)}
+                            >
+                              {getSaveButtonLabel(footerText.key)}
+                            </button>
                           </div>
-                        </section>
-                      );
-                    });
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Mentions légales</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          {[legalTitle, legalSubtitle].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                  <input
+                                    type="text"
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+
+                          {[legalEditorTitle, legalEditorBody, legalContactTitle, legalContactBody, legalIpTitle, legalIpBody].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                  <textarea
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleSaveSiteText(text)}
+                                  disabled={savingKey === text.key}
+                                  className={getSaveButtonClasses(text.key)}
+                                >
+                                  {getSaveButtonLabel(text.key)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    </>
+                  );
                 })()}
               </div>
             )}
@@ -744,7 +1259,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'bandeau' && (
-          <div className="max-w-5xl mx-auto mt-4">
+          <div className="max-w-6xl mx-auto mt-4">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Bandeau</h2>
             <p className="text-sm text-slate-600 mb-6 max-w-3xl">
               Configurez ici le texte et le lien de votre bandeau promotionnel affiché sous le header sur le site.

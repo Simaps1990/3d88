@@ -155,7 +155,7 @@ export default function Navigation() {
       {scrolled && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#3caa35] text-white shadow-md shadow-black/40 hover:bg-[#0e6e40] transition-colors"
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[#0e6e40] text-white shadow-md shadow-black/40 hover:bg-[#3caa35] transition-colors"
           aria-label="Remonter en haut de la page"
         >
           <ChevronUp className="w-5 h-5" />
