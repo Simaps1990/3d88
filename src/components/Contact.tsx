@@ -20,6 +20,7 @@ export default function Contact() {
 
   const title = useSiteText('contact_title', 'Demander un Devis');
   const subtitle = useSiteText('contact_subtitle', 'Un projet en tête ? Contactez-moi pour en discuter');
+  const contactEmail = useSiteText('contact_email', 'contact@impression3d.fr');
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -103,7 +104,7 @@ export default function Contact() {
         `Nom : ${formData.name}\nEmail : ${formData.email}\nTéléphone : ${formData.phone || '—'}\n\nMessage :\n${formData.message}\n\nFichier joint : ${fileName ? fileName + ' (' + (fileUrl || 'URL non disponible') + ')' : 'Aucun fichier joint'}`
       );
 
-      window.location.href = `mailto:boyer_thomas@hotmail.fr?subject=${mailtoSubject}&body=${mailtoBody}`;
+      window.location.href = `mailto:${contactEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
 
       setSuccess(true);
       setFormData({ name: '', email: '', phone: '', message: '' });
@@ -148,7 +149,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-1">Email</h3>
-                  <p className="text-slate-300">contact@impression3d.fr</p>
+                  <p className="text-slate-300">{contactEmail}</p>
                 </div>
               </div>
 

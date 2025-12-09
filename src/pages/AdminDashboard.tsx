@@ -137,6 +137,107 @@ export default function AdminDashboard() {
     });
   };
 
+  const compressImage = (
+    file: File,
+    maxSizeMB = 1.5,
+    maxWidth = 1920,
+    maxHeight = 1920
+  ): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error('Erreur lecture du fichier')); 
+
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Erreur chargement de l'image"));
+
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Contexte canvas indisponible'));
+            return;
+          }
+
+          const scale = Math.min(
+            1,
+            maxWidth / img.width,
+            maxHeight / img.height
+          );
+
+          const width = Math.round(img.width * scale);
+          const height = Math.round(img.height * scale);
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const targetBytes = maxSizeMB * 1024 * 1024;
+
+          const tryToBlob = (quality: number) => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('Impossible de compresser le fichier'));
+                  return;
+                }
+
+                if (blob.size <= targetBytes || quality <= 0.4) {
+                  resolve(blob);
+                  return;
+                }
+
+                // On réduit progressivement la qualité si le fichier est encore trop lourd
+                tryToBlob(quality - 0.1);
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+
+          tryToBlob(0.9);
+        };
+
+        img.src = reader.result as string;
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleHeroBackgroundUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // On compresse l'image côté client pour viser ~1,5 Mo max
+    let compressedBlob: Blob;
+    try {
+      compressedBlob = await compressImage(file, 1.5, 1920, 1920);
+    } catch (err) {
+      console.error('Erreur lors de la compression de limage hero', err);
+      alert("Erreur lors de la compression de l'image. Merci de réessayer avec un autre fichier.");
+      return;
+    }
+
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-hero-bg.jpg`;
+
+    const { data, error } = await supabase.storage.from('realizations').upload(fileName, compressedBlob);
+    if (error || !data?.path) {
+      console.error('Erreur upload image hero', error);
+      alert("Erreur lors de l'upload de l'image. Merci de réessayer.");
+      return;
+    }
+
+    const { data: publicData } = supabase.storage.from('realizations').getPublicUrl(data.path);
+    const url = publicData?.publicUrl || '';
+
+    if (!url) {
+      alert("Impossible de récupérer l'URL publique de l'image.");
+      return;
+    }
+
+    handleSiteTextChange('hero_background_url', url);
+  };
+
   const handleSiteTextChange = (key: string, value: string) => {
     setSiteTexts((current) => {
       const exists = current.some((text) => text.key === key);
@@ -870,6 +971,10 @@ export default function AdminDashboard() {
                   const heroLead = findText('hero_lead', "Texte d'introduction affiché sous le logo");
                   const heroCtaPrimary = findText('hero_cta_primary', 'Texte du bouton principal');
                   const heroCtaSecondary = findText('hero_cta_secondary', 'Texte du bouton secondaire');
+                  const heroBackgroundUrl = findText(
+                    'hero_background_url',
+                    "URL de l'image de fond du bloc hero (par exemple /fond.jpg ou une URL complète)"
+                  );
                   const aboutTitle = findText('about_title', 'Titre de la section À propos');
                   const aboutContent = findText('about_content', 'Texte de présentation');
 
@@ -918,13 +1023,33 @@ export default function AdminDashboard() {
 
                   const contactTitle = findText('contact_title', 'Titre de la section Contact');
                   const contactSubtitle = findText('contact_subtitle', 'Sous-titre de contact');
+                  const contactEmail = findText(
+                    'contact_email',
+                    "Adresse email qui recevra les demandes du formulaire de contact"
+                  );
+
+                  // Valeurs par défaut alignées avec le composant Contact.tsx
+                  if (!contactEmail.value) {
+                    contactEmail.value = 'contact@impression3d.fr';
+                  }
 
                   const footerText = findText('footer_text', 'Texte du pied de page');
+                  const socialInstagramUrl = findText(
+                    'social_instagram_url',
+                    'URL du profil Instagram affiché sur le site'
+                  );
+                  const socialFacebookUrl = findText(
+                    'social_facebook_url',
+                    'URL de la page Facebook affichée sur le site'
+                  );
 
-                  const navServices = findText('nav_services_label', 'Libellé lien Services');
-                  const navAbout = findText('nav_about_label', 'Libellé lien À propos');
-                  const navRealisations = findText('nav_realisations_label', 'Libellé lien Réalisations');
-                  const navContact = findText('nav_contact_label', 'Libellé lien Contact');
+                  // Valeurs par défaut alignées avec About.tsx et Footer.tsx
+                  if (!socialInstagramUrl.value) {
+                    socialInstagramUrl.value = 'https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm';
+                  }
+                  if (!socialFacebookUrl.value) {
+                    socialFacebookUrl.value = 'https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr';
+                  }
 
                   const legalTitle = findText('legal_title', 'Titre page Mentions légales');
                   const legalSubtitle = findText('legal_subtitle', 'Sous-titre Mentions légales');
@@ -941,29 +1066,159 @@ export default function AdminDashboard() {
                       <section className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Hero – Texte principal</h3>
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-2">
-                              <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                <span>{heroLead.description}</span>
-                                {dirtyKeys.includes(heroLead.key) && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                    Modifié
-                                  </span>
-                                )}
-                              </p>
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                              <span>{heroLead.description}</span>
+                              {dirtyKeys.includes(heroLead.key) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                  Modifié
+                                </span>
+                              )}
+                            </p>
+                            <div className="flex items-end gap-4">
                               <textarea
                                 value={heroLead.value}
                                 onChange={(e) => handleSiteTextChange(heroLead.key, e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                              />
+                              <button
+                                onClick={() => handleSaveSiteText(heroLead)}
+                                disabled={savingKey === heroLead.key}
+                                className={getSaveButtonClasses(heroLead.key)}
+                              >
+                                {getSaveButtonLabel(heroLead.key)}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Contact – Email de réception</h3>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                              <span>{contactEmail.description}</span>
+                              {dirtyKeys.includes(contactEmail.key) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                  Modifié
+                                </span>
+                              )}
+                            </p>
+                            <div className="flex items-end gap-4">
+                              <input
+                                type="email"
+                                value={contactEmail.value}
+                                onChange={(e) => handleSiteTextChange(contactEmail.key, e.target.value)}
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="contact@exemple.com"
+                              />
+                              <button
+                                onClick={() => handleSaveSiteText(contactEmail)}
+                                disabled={savingKey === contactEmail.key}
+                                className={getSaveButtonClasses(contactEmail.key)}
+                              >
+                                {getSaveButtonLabel(contactEmail.key)}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Réseaux sociaux</h3>
+                        <p className="text-xs text-slate-500">
+                          Ces liens sont utilisés dans la section À propos et dans le pied de page.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[socialInstagramUrl, socialFacebookUrl].map((text) => (
+                            <div
+                              key={text.key}
+                              className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
+                            >
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                  <span>{text.description}</span>
+                                  {dirtyKeys.includes(text.key) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                      Modifié
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="flex items-end gap-4">
+                                  <input
+                                    type="url"
+                                    value={text.value}
+                                    onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                    placeholder="https://..."
+                                  />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key) + ' self-stretch flex items-center justify-center'}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Hero – Image de fond</h3>
+                        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                              <span>{heroBackgroundUrl.description}</span>
+                              {dirtyKeys.includes(heroBackgroundUrl.key) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                  Modifié
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-end gap-4">
+                              <input
+                                type="text"
+                                value={heroBackgroundUrl.value}
+                                onChange={(e) => handleSiteTextChange(heroBackgroundUrl.key, e.target.value)}
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="/fond.jpg ou https://..."
+                              />
+                              <button
+                                onClick={() => handleSaveSiteText(heroBackgroundUrl)}
+                                disabled={savingKey === heroBackgroundUrl.key}
+                                className={getSaveButtonClasses(heroBackgroundUrl.key)}
+                              >
+                                {getSaveButtonLabel(heroBackgroundUrl.key)}
+                              </button>
+                            </div>
+
+                            {heroBackgroundUrl.value && (
+                              <div className="mt-2">
+                                <p className="text-[11px] text-slate-500 mb-1">Aperçu de l'image actuelle :</p>
+                                <div className="relative w-full max-w-md overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                  <img
+                                    src={heroBackgroundUrl.value}
+                                    alt="Aperçu image de fond hero"
+                                    className="w-full h-40 object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="pt-1 space-y-1">
+                              <p className="text-[11px] text-slate-500">Ou téléversez une nouvelle image :</p>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleHeroBackgroundUpload}
+                                className="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer"
                               />
                             </div>
-                            <button
-                              onClick={() => handleSaveSiteText(heroLead)}
-                              disabled={savingKey === heroLead.key}
-                              className={getSaveButtonClasses(heroLead.key)}
-                            >
-                              {getSaveButtonLabel(heroLead.key)}
-                            </button>
                           </div>
                         </div>
                       </section>
@@ -976,30 +1231,30 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-1">
-                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                    <span>{text.description}</span>
-                                    {dirtyKeys.includes(text.key) && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                        Modifié
-                                      </span>
-                                    )}
-                                  </p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                  <span>{text.description}</span>
+                                  {dirtyKeys.includes(text.key) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                      Modifié
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="flex items-end gap-4">
                                   <input
                                     type="text"
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1014,29 +1269,29 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                    <span>{text.description}</span>
-                                    {dirtyKeys.includes(text.key) && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                        Modifié
-                                      </span>
-                                    )}
-                                  </p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                  <span>{text.description}</span>
+                                  {dirtyKeys.includes(text.key) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                      Modifié
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="flex items-end gap-4">
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1055,38 +1310,38 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                    <span>{text.description}</span>
-                                    {dirtyKeys.includes(text.key) && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                        Modifié
-                                      </span>
-                                    )}
-                                  </p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                  <span>{text.description}</span>
+                                  {dirtyKeys.includes(text.key) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                      Modifié
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="flex items-end gap-4">
                                   {text.key.includes('_description') ? (
                                     <textarea
                                       value={text.value}
                                       onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
                                     />
                                   ) : (
                                     <input
                                       type="text"
                                       value={text.value}
                                       onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
                                     />
                                   )}
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1101,29 +1356,29 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                    <span>{text.description}</span>
-                                    {dirtyKeys.includes(text.key) && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                        Modifié
-                                      </span>
-                                    )}
-                                  </p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                                  <span>{text.description}</span>
+                                  {dirtyKeys.includes(text.key) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                      Modifié
+                                    </span>
+                                  )}
+                                </p>
+                                <div className="flex items-end gap-4">
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1140,22 +1395,22 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                <div className="flex items-end gap-4">
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1168,29 +1423,29 @@ export default function AdminDashboard() {
                       <section className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Pied de page</h3>
                         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-2">
-                              <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                                <span>Texte du bas de page</span>
-                                {dirtyKeys.includes(footerText.key) && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                                    Modifié
-                                  </span>
-                                )}
-                              </p>
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-slate-600 flex items-center gap-2">
+                              <span>Texte du bas de page</span>
+                              {dirtyKeys.includes(footerText.key) && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                  Modifié
+                                </span>
+                              )}
+                            </p>
+                            <div className="flex items-end gap-4">
                               <textarea
                                 value={footerText.value}
                                 onChange={(e) => handleSiteTextChange(footerText.key, e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
                               />
+                              <button
+                                onClick={() => handleSaveSiteText(footerText)}
+                                disabled={savingKey === footerText.key}
+                                className={getSaveButtonClasses(footerText.key)}
+                              >
+                                {getSaveButtonLabel(footerText.key)}
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleSaveSiteText(footerText)}
-                              disabled={savingKey === footerText.key}
-                              className={getSaveButtonClasses(footerText.key)}
-                            >
-                              {getSaveButtonLabel(footerText.key)}
-                            </button>
                           </div>
                         </div>
                       </section>
@@ -1203,23 +1458,23 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                <div className="flex items-end gap-4">
                                   <input
                                     type="text"
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1229,22 +1484,22 @@ export default function AdminDashboard() {
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                              <div className="space-y-2">
+                                <p className="text-xs font-medium text-slate-600">{text.description}</p>
+                                <div className="flex items-end gap-4">
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
                                   />
+                                  <button
+                                    onClick={() => handleSaveSiteText(text)}
+                                    disabled={savingKey === text.key}
+                                    className={getSaveButtonClasses(text.key)}
+                                  >
+                                    {getSaveButtonLabel(text.key)}
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleSaveSiteText(text)}
-                                  disabled={savingKey === text.key}
-                                  className={getSaveButtonClasses(text.key)}
-                                >
-                                  {getSaveButtonLabel(text.key)}
-                                </button>
                               </div>
                             </div>
                           ))}

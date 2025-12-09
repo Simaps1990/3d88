@@ -3,6 +3,14 @@ import { Instagram, Facebook } from 'lucide-react';
 
 export default function Footer() {
   const text = useSiteText('footer_text', `© ${new Date().getFullYear()} 3D88. Tous droits réservés.`);
+  const instagramUrl = useSiteText(
+    'social_instagram_url',
+    'https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm'
+  );
+  const facebookUrl = useSiteText(
+    'social_facebook_url',
+    'https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr'
+  );
 
   return (
     <footer className="bg-[#101b14] text-slate-300 py-6 border-t border-slate-800/60">
@@ -16,7 +24,7 @@ export default function Footer() {
             <span>Suivez-nous sur nos réseaux :</span>
             <div className="flex items-center gap-4 mb-3">
               <a
-                href="https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm"
+                href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
@@ -25,7 +33,7 @@ export default function Footer() {
                 <Instagram className="w-5 h-5 md:w-6 md:h-6" />
               </a>
               <a
-                href="https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr"
+                href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"

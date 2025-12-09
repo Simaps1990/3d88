@@ -12,6 +12,14 @@ export default function About() {
     "Je suis passionné par la conception 3D et l'impression 3D. 3D88 vous accompagne de l'idée au prototype puis à la pièce finale, pour des projets uniques ou des petites séries.\n\nBasé en Isère, je travaille avec des particuliers, des professionnels et des collectivités pour donner vie à des pièces techniques, des objets décoratifs ou des maquettes sur mesure."
   );
   const imageUrl = useSiteText('about_image_url', '/Picto.png');
+  const instagramUrl = useSiteText(
+    'social_instagram_url',
+    'https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm'
+  );
+  const facebookUrl = useSiteText(
+    'social_facebook_url',
+    'https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr'
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -57,7 +65,7 @@ export default function About() {
               <span>Suivez-moi sur les réseaux :</span>
               <div className="flex items-center gap-4">
                 <a
-                  href="https://www.instagram.com/print.3d88?igsh=cno1aTRuNmhoaWxm"
+                  href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
@@ -66,7 +74,7 @@ export default function About() {
                   <Instagram className="w-5 h-5 md:w-6 md:h-6" />
                 </a>
                 <a
-                  href="https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr"
+                  href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
