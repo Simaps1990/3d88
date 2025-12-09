@@ -10,26 +10,36 @@
 .banner-marquee-inner {
   display: flex;
   width: 200%;
-  animation: banner-marquee 20s linear infinite;
+  /* Desktop / par défaut : défilement très lent */
+  animation: banner-marquee 45s linear infinite;
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .banner-marquee-inner {
+    /* Mobile : nettement plus rapide que desktop */
+    animation-duration: 16s;
+  }
+}
+
 .banner-marquee-item {
-  /* Chaque élément occupe toute la largeur du bandeau
-     pour éviter les resets visibles sur mobile. */
-  flex: 0 0 100%;
+  /* Deux éléments se partagent la largeur totale (200%),
+     chacun prend 50% pour permettre un défilement continu. */
+  flex: 0 0 50%;
   display: inline-flex;
   align-items: center;
-  padding-right: 3rem; /* espace entre deux passages */
+  padding-right: 1.5rem; /* espace entre deux passages (réduit) */
 }
 
 @keyframes banner-marquee {
   0% {
+    /* Le premier bloc commence en position normale */
     transform: translateX(0);
   }
   100% {
-    /* On décale d'une largeur complète (100% de la largeur du bandeau),
-       ce qui correspond à la longueur totale d'un cycle avant de boucler. */
-    transform: translateX(-100%);
+    /* On décale de 50% de la largeur totale (200%),
+       soit exactement la largeur d'un bloc :
+       la deuxième copie prend le relais sans coupure. */
+    transform: translateX(-50%);
   }
 }

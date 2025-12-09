@@ -11,6 +11,10 @@ export default function Footer() {
     'social_facebook_url',
     'https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr'
   );
+  const googleUrl = useSiteText(
+    'social_google_url',
+    'https://maps.app.goo.gl/zXUxZVvabJBocmUE6'
+  );
 
   return (
     <footer className="bg-[#101b14] text-slate-300 pt-6 pb-24 md:pb-8 border-t border-slate-800/60">
@@ -40,6 +44,17 @@ export default function Footer() {
                 aria-label="Facebook 3D88"
               >
                 <Facebook className="w-5 h-5 md:w-6 md:h-6" />
+              </a>
+              <a
+                href={googleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#4a7a54] hover:text-[#3caa35] transition-colors"
+                aria-label="Google Maps 3D88"
+              >
+                <span className="text-xl md:text-2xl font-bold leading-none align-middle">
+                  G
+                </span>
               </a>
             </div>
           </div>

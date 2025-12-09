@@ -49,6 +49,9 @@ export default function Hero() {
             transform: `translateY(${scrollY * 0.3}px)`
           }}
         >
+          <h1 className="sr-only">
+            Impression 3D sur mesure, modélisation 3D et prototypage dans les Vosges avec 3D88
+          </h1>
           <div className="mb-1 md:mb-3 flex justify-center">
             <img src="/LOGOng.png" alt="3D88" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
           </div>

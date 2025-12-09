@@ -1042,6 +1042,10 @@ export default function AdminDashboard() {
                     'social_facebook_url',
                     'URL de la page Facebook affichée sur le site'
                   );
+                  const socialGoogleUrl = findText(
+                    'social_google_url',
+                    'URL de la fiche Google Maps affichée dans le pied de page'
+                  );
 
                   // Valeurs par défaut alignées avec About.tsx et Footer.tsx
                   if (!socialInstagramUrl.value) {
@@ -1049,6 +1053,9 @@ export default function AdminDashboard() {
                   }
                   if (!socialFacebookUrl.value) {
                     socialFacebookUrl.value = 'https://www.facebook.com/share/1AUcQdRyEA/?mibextid=wwXIfr';
+                  }
+                  if (!socialGoogleUrl.value) {
+                    socialGoogleUrl.value = 'https://maps.app.goo.gl/zXUxZVvabJBocmUE6';
                   }
 
                   const legalTitle = findText('legal_title', 'Titre page Mentions légales');
@@ -1131,7 +1138,7 @@ export default function AdminDashboard() {
                           Ces liens sont utilisés dans la section À propos et dans le pied de page.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {[socialInstagramUrl, socialFacebookUrl].map((text) => (
+                          {[socialInstagramUrl, socialFacebookUrl, socialGoogleUrl].map((text) => (
                             <div
                               key={text.key}
                               className="bg-white rounded-lg p-4 shadow-sm border border-slate-200"
