@@ -31,7 +31,11 @@ export default function Hero() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('${backgroundUrl || "/fond.jpg"}')`,
+          // Si aucune valeur n'est encore chargée, on n'affiche pas d'image
+          // pour éviter le flash de l'ancien fond. On garde juste la couleur de fond.
+          backgroundImage: backgroundUrl
+            ? `url('${backgroundUrl}')`
+            : 'none',
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       />

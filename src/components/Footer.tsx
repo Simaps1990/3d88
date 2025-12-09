@@ -13,7 +13,7 @@ export default function Footer() {
   );
 
   return (
-    <footer className="bg-[#101b14] text-slate-300 pt-6 pb-16 md:pb-6 border-t border-slate-800/60">
+    <footer className="bg-[#101b14] text-slate-300 pt-6 pb-24 md:pb-8 border-t border-slate-800/60">
       <div className="container mx-auto px-6">
         <div className="flex flex-col items-start gap-0 text-left pl-4 md:pl-8">
           {/* Logo aligné à gauche */}

@@ -62,15 +62,8 @@ export default function GoogleReviews() {
     void loadReviews();
   }, []);
 
-  useEffect(() => {
-    if (reviews.length === 0) return;
-
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % reviews.length);
-    }, 7000);
-
-    return () => clearInterval(interval);
-  }, [reviews.length]);
+  // Rotation automatique désactivée :
+  // on laisse l'utilisateur choisir l'avis via les puces.
 
   if (reviews.length === 0) {
     return null;

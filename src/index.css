@@ -28,7 +28,8 @@
     transform: translateX(0);
   }
   100% {
-    /* On décale d'une largeur d'élément (50% de 200%) */
-    transform: translateX(-50%);
+    /* On décale d'une largeur complète (100% de la largeur du bandeau),
+       ce qui correspond à la longueur totale d'un cycle avant de boucler. */
+    transform: translateX(-100%);
   }
 }
