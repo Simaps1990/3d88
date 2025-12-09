@@ -15,10 +15,12 @@
 }
 
 .banner-marquee-item {
-  flex: 0 0 50%;
+  /* Chaque élément occupe toute la largeur du bandeau
+     pour éviter les resets visibles sur mobile. */
+  flex: 0 0 100%;
   display: inline-flex;
   align-items: center;
-  padding-right: 3rem;
+  padding-right: 3rem; /* espace entre deux passages */
 }
 
 @keyframes banner-marquee {
@@ -26,6 +28,7 @@
     transform: translateX(0);
   }
   100% {
+    /* On décale d'une largeur d'élément (50% de 200%) */
     transform: translateX(-50%);
   }
 }

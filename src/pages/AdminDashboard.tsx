@@ -496,7 +496,7 @@ export default function AdminDashboard() {
           </div>
 
           {isMenuOpen && (
-            <div className="mt-3 flex flex-col space-y-4 md:hidden">
+            <div className="mt-3 flex flex-col space-y-4 pb-4 md:hidden">
               {/* Bloc retour au site */}
               <div className="border-b border-slate-800 pb-3">
                 <a
@@ -566,7 +566,7 @@ export default function AdminDashboard() {
               {/* Bloc déconnexion */}
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm mb-4"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Déconnexion
@@ -905,7 +905,7 @@ export default function AdminDashboard() {
                         <textarea
                           name="review_text"
                           defaultValue={review?.review_text || ''}
-                          className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 resize-y min-h-[80px]"
+                          className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 resize-y min-h-[128px]"
                         />
                       </div>
                     </div>
@@ -1079,7 +1079,7 @@ export default function AdminDashboard() {
                               <textarea
                                 value={heroLead.value}
                                 onChange={(e) => handleSiteTextChange(heroLead.key, e.target.value)}
-                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[96px]"
                               />
                               <button
                                 onClick={() => handleSaveSiteText(heroLead)}
@@ -1282,7 +1282,7 @@ export default function AdminDashboard() {
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[96px]"
                                   />
                                   <button
                                     onClick={() => handleSaveSiteText(text)}
@@ -1324,7 +1324,7 @@ export default function AdminDashboard() {
                                     <textarea
                                       value={text.value}
                                       onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[96px]"
                                     />
                                   ) : (
                                     <input
@@ -1369,7 +1369,7 @@ export default function AdminDashboard() {
                                   <textarea
                                     value={text.value}
                                     onChange={(e) => handleSiteTextChange(text.key, e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[80px]"
+                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[128px]"
                                   />
                                   <button
                                     onClick={() => handleSaveSiteText(text)}
@@ -1436,7 +1436,7 @@ export default function AdminDashboard() {
                               <textarea
                                 value={footerText.value}
                                 onChange={(e) => handleSiteTextChange(footerText.key, e.target.value)}
-                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[60px]"
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 resize-y min-h-[96px]"
                               />
                               <button
                                 onClick={() => handleSaveSiteText(footerText)}

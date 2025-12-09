@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function useSiteText(key: string, defaultValue: string) {
-  const [value, setValue] = useState(defaultValue);
+  // On commence vide pour éviter d'afficher la valeur par défaut
+  // avant de savoir si une valeur existe en base.
+  const [value, setValue] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -15,8 +17,12 @@ export function useSiteText(key: string, defaultValue: string) {
         .maybeSingle();
 
       if (!isMounted) return;
+
       if (!error && data && typeof data.value === 'string' && data.value.trim() !== '') {
         setValue(data.value);
+      } else {
+        // Si aucune valeur n'est en base, on retombe sur la valeur par défaut
+        setValue(defaultValue);
       }
     }
 
@@ -25,7 +31,7 @@ export function useSiteText(key: string, defaultValue: string) {
     return () => {
       isMounted = false;
     };
-  }, [key]);
+  }, [key, defaultValue]);
 
   return value;
 }

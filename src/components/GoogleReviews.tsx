@@ -93,7 +93,7 @@ export default function GoogleReviews() {
           </p>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-slate-800/80 border border-slate-700 shadow-xl px-6 py-8 md:px-10 md:py-10">
+        <div className="relative overflow-hidden rounded-2xl bg-slate-800/80 border border-slate-700 shadow-xl px-6 py-8 md:px-10 md:py-10 min-h-[230px] md:min-h-[210px]">
           <div className="transition-all duration-500 ease-out">
             <div className="flex items-center justify-between mb-4">
               <div className="text-left">

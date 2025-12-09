@@ -35,7 +35,7 @@ export default function Hero() {
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       />
-      <div className="absolute inset-0 bg-[#101b14]/80" />
+      <div className="absolute inset-0 bg-[#101b14]/60" />
 
       <div className="container mx-auto px-6 relative z-10">
         <div
@@ -46,7 +46,7 @@ export default function Hero() {
           }}
         >
           <div className="mb-1 md:mb-3 flex justify-center">
-            <img src="/LOGOng.png" alt="3D88" className="w-64 h-64 md:w-96 md:h-96 object-contain" />
+            <img src="/LOGOng.png" alt="3D88" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
           </div>
 
           <p className="text-xl md:text-2xl text-slate-100 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
