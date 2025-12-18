@@ -4,6 +4,8 @@ import { useSiteText } from '../hooks/useSiteText';
 import { Mail, Phone, MapPin, Send, FileUp, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function Contact() {
+  const MAX_EMAIL_ATTACHMENT_BYTES = 4 * 1024 * 1024;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,7 +22,7 @@ export default function Contact() {
 
   const title = useSiteText('contact_title', 'Demander un Devis');
   const subtitle = useSiteText('contact_subtitle', 'Un projet en tête ? Contactez-moi pour en discuter');
-  const contactEmail = useSiteText('contact_email', 'contact@impression3d.fr');
+  const contactEmail = useSiteText('contact_email', '3d88.contact@gmail.com');
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -39,6 +41,19 @@ export default function Contact() {
     return () => observer.disconnect();
   }, []);
 
+  const fileToBase64 = (inputFile: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        const commaIndex = result.indexOf(',');
+        resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+      };
+      reader.readAsDataURL(inputFile);
+    });
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -48,8 +63,19 @@ export default function Contact() {
     try {
       let fileUrl = null;
       let fileName = null;
+      let emailAttachment: { filename: string; content: string; contentType?: string; size: number } | null = null;
 
       if (file) {
+        if (file.size <= MAX_EMAIL_ATTACHMENT_BYTES) {
+          const base64 = await fileToBase64(file);
+          emailAttachment = {
+            filename: file.name,
+            content: base64,
+            contentType: file.type || undefined,
+            size: file.size,
+          };
+        }
+
         const fileExt = file.name.split('.').pop();
         const filePath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
@@ -97,14 +123,67 @@ export default function Contact() {
           status: 'nouveau'
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.warn('Insertion quote_requests échouée, on continue avec envoi email:', insertError);
+      }
 
-      const mailtoSubject = encodeURIComponent('Nouvelle demande de devis depuis 3D88');
-      const mailtoBody = encodeURIComponent(
-        `Nom : ${formData.name}\nEmail : ${formData.email}\nTéléphone : ${formData.phone || '—'}\n\nMessage :\n${formData.message}\n\nFichier joint : ${fileName ? fileName + ' (' + (fileUrl || 'URL non disponible') + ')' : 'Aucun fichier joint'}`
-      );
+      const subject = 'Nouvelle demande de devis depuis 3D88';
+      const html = `
+        <!DOCTYPE html>
+        <html lang="fr">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+          </head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827; background: #f8fafc; padding: 20px;">
+            <div style="max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+              <div style="background: #0e6e40; color: #ffffff; padding: 20px;">
+                <h1 style="margin: 0; font-size: 18px;">Nouvelle demande via le formulaire de contact</h1>
+                <p style="margin: 6px 0 0 0; font-size: 14px; opacity: .95;">Site : 3D88</p>
+              </div>
+              <div style="padding: 20px;">
+                <h2 style="margin: 0 0 12px 0; font-size: 16px; color: #0f172a;">Informations client</h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td style="padding: 6px 0; color: #64748b; width: 160px;">Nom</td><td style="padding: 6px 0;">${formData.name}</td></tr>
+                  <tr><td style="padding: 6px 0; color: #64748b;">Email</td><td style="padding: 6px 0;"><a href="mailto:${formData.email}">${formData.email}</a></td></tr>
+                  <tr><td style="padding: 6px 0; color: #64748b;">Téléphone</td><td style="padding: 6px 0;">${formData.phone || '—'}</td></tr>
+                  <tr><td style="padding: 6px 0; color: #64748b;">Date</td><td style="padding: 6px 0;">${new Date().toLocaleString('fr-FR')}</td></tr>
+                </table>
 
-      window.location.href = `mailto:${contactEmail}?subject=${mailtoSubject}&body=${mailtoBody}`;
+                <h2 style="margin: 18px 0 12px 0; font-size: 16px; color: #0f172a;">Message</h2>
+                <div style="white-space: pre-wrap; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">${formData.message}</div>
+
+                <h2 style="margin: 18px 0 12px 0; font-size: 16px; color: #0f172a;">Fichier</h2>
+                <p style="margin: 0;">
+                  ${fileName ? `${fileName}${fileUrl ? ` – <a href="${fileUrl}">lien</a>` : ''}` : 'Aucun fichier joint'}
+                </p>
+
+                <p style="margin: 18px 0 0 0; color: #64748b; font-size: 12px;">
+                  Réponds directement à cet email : le Reply-To est configuré sur l'adresse du client.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const response = await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject,
+          html,
+          replyTo: formData.email,
+          attachment: emailAttachment,
+        }),
+      });
+
+      if (!response.ok) {
+        const raw = await response.text();
+        throw new Error(raw || `Erreur envoi email (HTTP ${response.status})`);
+      }
 
       setSuccess(true);
       setFormData({ name: '', email: '', phone: '', message: '' });

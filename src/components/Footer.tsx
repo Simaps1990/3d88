@@ -21,7 +21,7 @@ export default function Footer() {
       <div className="container mx-auto px-6">
         <div className="flex flex-col items-start gap-0 text-left pl-4 md:pl-8">
           {/* Logo aligné à gauche */}
-          <img src="/LOGOngsans.png" alt="3D88" className="w-20 h-20 md:w-24 md:h-24 object-contain" />
+          <img src="/LOGO_blanc_fond_transparent_sans.png" alt="3D88" className="w-20 h-20 md:w-24 md:h-24 object-contain" />
 
           {/* Suivez-nous sur 2 lignes (texte + icônes) */}
           <div className="mt-0 flex flex-col items-start gap-1 text-[#4a7a54] text-xs md:text-sm">

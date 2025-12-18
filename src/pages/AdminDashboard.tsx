@@ -449,7 +449,7 @@ export default function AdminDashboard() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="relative flex items-center justify-center md:justify-between h-20">
             <a href="/" className="flex items-center space-x-3">
-              <img src="/LOGOngsans.png" alt="3D88" className="h-14 w-auto object-contain" />
+              <img src="/LOGO_blanc_fond_transparent_sans.png" alt="3D88" className="h-14 w-auto object-contain" />
               <span className="hidden md:inline-block text-xs font-medium uppercase tracking-wide text-white ml-2">
                 Mon espace perso
               </span>
@@ -1030,7 +1030,7 @@ export default function AdminDashboard() {
 
                   // Valeurs par défaut alignées avec le composant Contact.tsx
                   if (!contactEmail.value) {
-                    contactEmail.value = 'contact@impression3d.fr';
+                    contactEmail.value = '3d88.contact@gmail.com';
                   }
 
                   const footerText = findText('footer_text', 'Texte du pied de page');

@@ -53,7 +53,7 @@ export default function Hero() {
             Impression 3D sur mesure, modélisation 3D et prototypage dans les Vosges avec 3D88
           </h1>
           <div className="mb-1 md:mb-3 flex justify-center">
-            <img src="/LOGOng.png" alt="3D88" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
+            <img src="/LOGO_blanc_fond_transparent.png" alt="3D88" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
           </div>
 
           <p className="text-xl md:text-2xl text-slate-100 mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">

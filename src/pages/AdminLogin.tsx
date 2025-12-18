@@ -31,7 +31,7 @@ export default function AdminLogin() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-2">
-          <img src="/LOGOng.png" alt="3D88" className="w-56 h-56 mx-auto mb-0 object-contain" />
+          <img src="/LOGO_blanc_fond_transparent.png" alt="3D88" className="w-56 h-56 mx-auto mb-0 object-contain" />
           <h1 className="text-3xl font-bold text-white mb-2">Espace Admin</h1>
         </div>
 

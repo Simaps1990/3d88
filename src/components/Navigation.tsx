@@ -54,7 +54,7 @@ export default function Navigation() {
         <div className="container mx-auto px-6">
           <div className="relative flex items-center justify-center md:justify-between h-20">
             <a href="/" className="flex items-center space-x-3 group">
-              <img src="/LOGOngsans.png" alt="3D88" className="h-14 w-auto object-contain" />
+              <img src="/LOGO_blanc_fond_transparent_sans.png" alt="3D88" className="h-14 w-auto object-contain" />
             </a>
 
             <div className="hidden md:flex items-center space-x-8">
