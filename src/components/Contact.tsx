@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
-import { supabase } from '../lib/supabase';
 import { useSiteText } from '../hooks/useSiteText';
 import { Mail, Phone, MapPin, Send, FileUp, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -61,11 +60,12 @@ export default function Contact() {
     setSuccess(false);
 
     try {
-      let fileUrl = null;
       let fileName = null;
       let emailAttachment: { filename: string; content: string; contentType?: string; size: number } | null = null;
 
       if (file) {
+        fileName = file.name;
+
         if (file.size <= MAX_EMAIL_ATTACHMENT_BYTES) {
           const base64 = await fileToBase64(file);
           emailAttachment = {
@@ -75,56 +75,6 @@ export default function Contact() {
             size: file.size,
           };
         }
-
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('quote-files')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          if (uploadError.message.includes('not found')) {
-            const { error: bucketError } = await supabase.storage.createBucket('quote-files', {
-              public: false,
-            });
-
-            if (!bucketError) {
-              const { error: retryError } = await supabase.storage
-                .from('quote-files')
-                .upload(filePath, file);
-
-              if (retryError) throw retryError;
-            } else {
-              throw bucketError;
-            }
-          } else {
-            throw uploadError;
-          }
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('quote-files')
-          .getPublicUrl(filePath);
-
-        fileUrl = publicUrl;
-        fileName = file.name;
-      }
-
-      const { error: insertError } = await supabase
-        .from('quote_requests')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          message: formData.message,
-          file_url: fileUrl,
-          file_name: fileName,
-          status: 'nouveau'
-        });
-
-      if (insertError) {
-        console.warn('Insertion quote_requests échouée, on continue avec envoi email:', insertError);
       }
 
       const subject = 'Nouvelle demande de devis depuis 3D88';
@@ -155,7 +105,7 @@ export default function Contact() {
 
                 <h2 style="margin: 18px 0 12px 0; font-size: 16px; color: #0f172a;">Fichier</h2>
                 <p style="margin: 0;">
-                  ${fileName ? `${fileName}${fileUrl ? ` – <a href="${fileUrl}">lien</a>` : ''}` : 'Aucun fichier joint'}
+                  ${fileName ? (emailAttachment ? `${fileName} – joint à l'email` : `${fileName} – non joint (fichier trop volumineux)`) : 'Aucun fichier joint'}
                 </p>
 
                 <p style="margin: 18px 0 0 0; color: #64748b; font-size: 12px;">
